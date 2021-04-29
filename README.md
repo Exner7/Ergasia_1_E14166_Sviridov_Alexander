@@ -114,14 +114,14 @@ with a rudimentary login authentication and session authorization system.
         Each user session is in the format: `user_uuid: (username, time)`.
         So the `users_sessions` at any point (if not empty) is in the form:
         
-        ```py
-        users_sessions = {
-            user_uuid_1: (username_1, time_1),
-            user_uuid_2: (username_2, time_2),
+        ```json
+        users_sessions: {
+            user_uuid_1: [ username_1, time_1 ],
+            user_uuid_2: [ username_2, time_2 ],
             
                         ...
             
-            user_uuid_N: (username_N, time_N)
+            user_uuid_N: [ username_N, time_N ]
         }
         ```
 
@@ -217,7 +217,7 @@ What is really required is the implementation of the core functionality of each 
 
             ```py
                 return Response(
-                    data[ 'username' ] + ' was added to the MongoDB',
+                    'The user ' + data[ 'username' ] + ' was added to the database.',
                     status = 200,
                     mimetype = 'application/json'
                 )
@@ -253,7 +253,7 @@ What is really required is the implementation of the core functionality of each 
             ![](readmeimages/testing1b.png)
 
             
-        3.  Using mongo shell find all Users after the request (user is indeed present)
+        3.  Using mongo shell find all Users after the request (user is indeed inserted)
         
             ![](readmeimages/testing1c.png)
 
@@ -261,5 +261,113 @@ What is really required is the implementation of the core functionality of each 
             in the data already exists an error response is returned `status = 400`:
 
             ![](readmeimages/testing1d.png)
+
+---
+
+2. **`[ POST ] ( endpoint ): /login`**
+
+    Expects user to pass json data to the body of the request.
+    An example for the expected format for the json is shown:
+
+    ```json
+    {
+        "username": "sherlock",
+        "password": "sherl0cked"
+    }
+    ```
+    The endpoint's method `login()` requests the json,
+    handles the cases for exceptions, improper json content
+    and incomplete json information, returning with the
+    appropriate response for each case.
+
+    * ##### Implementation
+
+        1.  Check if username and password correspond to an existing user in **Users**
+            *   if there is no user with the provided username and password the
+                return with an error response with `status = 400`
+        
+            this check is implemented with the following if statement:
+
+            ``` py
+                if users.find( {
+                    'username': data[ 'username' ],
+                    'password': data[ 'password' ]
+                } ).count() == 0:
+                    
+                    return Response(
+                        'Wrong username or password.',
+                        status = 400,
+                        mimetype = 'application/json'
+                    )
+            ```
+
+        2.  (This step is reached only in case that the previous check 
+            was false i.e. user is valid) creat a new user-session:
+
+            ```py
+                user_uuid = create_session( data[ 'username' ] )
+            ```
+
+        3.  return with a success response containing the user-uuid
+            with `status = 200`:
+
+            ```py
+                res = { 'uuid': user_uuid, 'username': data[ 'username' ] }
+
+                return Response( json.dumps( res ), status = 200, mimetype = 'application/json' )
+            ```
+
+    * ##### Testing
+
+        1.  Use **Postman** to make the request.
+        
+            * Type **`localhost:5000/createUser`** in the **URL field**.
+            * Set the request method to **`POST`**.
+            * Write the request data as **`raw`** **`json`** in the request **body** as
+            
+                ```json
+                {
+                    "username": "sherlock",
+                    "password": "morimorimorimoriarty"
+                }
+                ```
+            * Push the **Send** button.
+
+            As shown in the screenshot below, the request
+            got an error responses with `status = 400`
+            since the password did not match:
+            
+            ![](readmeimages/testing2a.png)
+
+        2.  Use **Postman** to make the request.
+        
+            * Type **`localhost:5000/createUser`** in the **URL field**.
+            * Set the request method to **`POST`**.
+            * Write the request data as **`raw`** **`json`** in the request **body** as
+            
+                ```json
+                {
+                    "username": "sherlock",
+                    "password": "sherl0cked"
+                }
+                ```
+            * Push the **Send** button.
+
+            As shown in the screenshot below, the request
+            a success responses with `status = 200`
+            and in the response body we get a uuid along
+            with the username:
+        
+            ![](readmeimages/testing2b.png)
+
+            In a successful login the `users_sessions` dictionary is updated
+            with an entry like `user_uuid: [ username, time ]`.
+            The root route `localhost:5000/` is used for testing
+            to get the `users_sessions` contents.
+
+            The screenshot below shows that
+            the dictionary was indeed updated with the new session:
+
+            ![](readmeimages/testing2c.png)
 
 ---

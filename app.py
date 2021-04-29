@@ -71,11 +71,11 @@ def get_sessions():
 
 
 
-# [ POST ] ( endpoint ): /createUser
+# 1. [ POST ] ( endpoint ): /createUser
 #
 # Get username, password from json request data
-# and create a new user
-# by inserting the username and password in Users
+# and create a new user by inserting
+# username and password in Users.
 @app.route( '/createUser', methods = [ 'POST' ] )
 def create_user():
 
@@ -105,7 +105,47 @@ def create_user():
     users.insert_one( { 'username': data[ 'username' ], 'password': data[ 'password' ] } )
 
     # return with a success response
-    return Response( data[ 'username' ] + ' was added to the MongoDB', status = 200, mimetype = 'application/json' )
+    return Response( 'The user ' + data[ 'username' ] + ' was added to the database.', status = 200, mimetype = 'application/json' )
+
+
+
+# 2. [ POST ] ( endpoint ): /login
+#
+# Get username, password from json request data
+# if valid create a new session for the user
+# and return with a response containing uuid.
+@app.route( '/login', methods = [ 'POST' ] )
+def login():
+
+    # initialize request data object
+    data = None
+
+    try:
+        # retreive the json request data
+        data = json.loads( request.data )
+    except Exception as e:
+        # if an exception occurs while retreiving data return with an error response
+        return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
+
+    if data == None:
+        # if the retreived json request data are empty return with an error response 
+        return Response( 'Bad request.', status = 500, mimetype = 'application/json' )
+
+    if 'username' not in data or 'password' not in data:
+        # if username or password is not in tha json request data return with an error response
+        return Response( 'Incomplete information.', status = 500, mimetype = 'application/json' )
+
+    if users.find( { 'username': data[ 'username' ], 'password': data[ 'password' ] } ).count() == 0:
+        # if there is no user with the provided username and password return with an error response
+        return Response( 'Wrong username or password.', status = 400, mimetype = 'application/json' )
+
+    # create a new user-session
+    user_uuid = create_session( data[ 'username' ] )
+
+    res = { 'uuid': user_uuid, 'username': data[ 'username' ] }
+
+    # return with a success response containing the user-uuid
+    return Response( json.dumps( res ), status = 200, mimetype = 'application/json' )
 
 
 
