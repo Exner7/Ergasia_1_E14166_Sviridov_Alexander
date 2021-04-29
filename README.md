@@ -152,3 +152,114 @@ It is recommended to use [Postman](https://www.postman.com/) for testing this
 application and to make requests to all the API Endpoints.
 
 ---
+
+### Implementing Project Requirements and Testing
+
+The requirement for the project is the implementation of **9 *API Endpoints***
+for the Flask application within the `app.py` script.
+
+As already mentioned in the **Setup**, *the data fetching logic* is already implemented,
+so this parts of the endpoints are not described here.
+
+What is really required is the implementation of the core functionality of each endpoint.
+
+<br/>
+
+#### The API Endpoints
+
+---
+
+1. **`[ POST ] ( endpoint ): /createUser`**
+
+    Expects user to pass json data to the body of the request.
+    An example for the expected format for the json is shown:
+
+    ```json
+    {
+        "username": "sherlock",
+        "password": "sherl0cked"
+    }
+    ```
+    The endpoint's method `create_user()` requests the json,
+    handles the cases for exceptions, improper json content
+    and incomplete json information, returning with the
+    appropriate response for each case.
+
+    * ##### Implementation
+
+        1.  Check if a user with the username given in the data already exists in **Users**
+            * if he does exist then return with an error response with `status = 400`
+        
+            this check is implemented with the following if statement:
+
+            ``` py
+                if users.find( { 'username': data[ 'username' ] } ).count() != 0:
+                    return Response(
+                        'A user with the given username already exists.',
+                        status = 400,
+                        mimetype = 'application/json'
+                    )
+            ```
+
+        2.  Insert the new user to **Users** (this step is reached only in case
+            there is no user in **Users** with the username given in the data).
+            
+            this is implemented using the following statement:
+
+            ```py
+                users.insert_one( {
+                    'username': data[ 'username' ],
+                    'password': data[ 'password' ]
+                } )
+            ```
+
+        3.  return with a success response with `status = 200`, which is implemented as:
+
+            ```py
+                return Response(
+                    data[ 'username' ] + ' was added to the MongoDB',
+                    status = 200,
+                    mimetype = 'application/json'
+                )
+            ```
+
+    * ##### Testing
+
+        1.  In the terminal start the mogno shell in interactive mode by entering:
+
+            `$ (sudo) docker exec -it mongodb mongo`
+
+            Using database database **InfoSys** find all Users (should be empty):
+            
+            ![](readmeimages/testing1a.png)
+
+        2.  Use **Postman** to make the request.
+        
+            * Type **`localhost:5000/createUser`** in the **URL field**.
+            * Set the request method to **`POST`**.
+            * Write the request data as **`raw`** **`json`** in the request **body** as
+            
+                ```json
+                {
+                    "username": "sherlock",
+                    "password": "sherl0cked"
+                }
+                ```
+            * Push the **Send** button.
+
+            As shown in the screenshot below, the request
+            got a success responses with `status = 200`:
+            
+            ![](readmeimages/testing1b.png)
+
+            
+        3.  Using mongo shell find all Users after the request (user is indeed present)
+        
+            ![](readmeimages/testing1c.png)
+
+        4.  If the exact same request is made since a user with the username given
+            in the data already exists an error response is returned `status = 400`:
+
+            ![](readmeimages/testing1d.png)
+
+---
