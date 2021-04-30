@@ -114,7 +114,7 @@ with a rudimentary login authentication and session authorization system.
         Each user session is in the format: `user_uuid: (username, time)`.
         So the `users_sessions` at any point (if not empty) is in the form:
         
-        ```py
+        ```js
         users_sessions: {
             user_uuid_1: [ username_1, time_1 ],
             user_uuid_2: [ username_2, time_2 ],
@@ -271,7 +271,7 @@ What is really required is the implementation of the core functionality of each 
     Expects user to pass json data to the body of the request.
     An example for the expected format for the json is shown:
 
-    ```json
+    ```js
     {
         "username": "sherlock",
         "password": "sherl0cked"
@@ -327,7 +327,7 @@ What is really required is the implementation of the core functionality of each 
             * Type **`localhost:5000/createUser`** in the **URL field**.
             * Write the request data as **`raw`** **`json`** in the request **body** as
             
-                ```json
+                ```js
                 {
                     "username": "sherlock",
                     "password": "morimorimorimoriarty" // wrong password
@@ -347,7 +347,7 @@ What is really required is the implementation of the core functionality of each 
             * Type **`localhost:5000/createUser`** in the **URL field**.
             * Write the request data as **`raw`** **`json`** in the request **body** as
             
-                ```json
+                ```js
                 {
                     "username": "sherlock",
                     "password": "sherl0cked" // correct password
@@ -381,7 +381,7 @@ What is really required is the implementation of the core functionality of each 
 
     ```json
     {
-        "email": "sherlock@outlook.com"
+        "email": "blancheday@ontagene.com"
     }
     ```
     The endpoint's method `get_student()` requests the json,
@@ -448,7 +448,7 @@ What is really required is the implementation of the core functionality of each 
 
             * Write the request data as **`raw`** **`json`** in the request **body** as
             
-                ```json
+                ```js
                 {
                     "email": "blancheday@ontagene123.com" // email not in database
                 }
@@ -459,7 +459,7 @@ What is really required is the implementation of the core functionality of each 
             got an error responses with `status = 401` Unauthorized
             since the uuid is invalid:
 
-            ![](readmeimages/testing3a.png)
+            ![](readmeimages/testing3b.png)
             
 
         2. Use **Postman** to make the request.
@@ -471,7 +471,7 @@ What is really required is the implementation of the core functionality of each 
 
             * Write the request data as **`raw`** **`json`** in the request **body** as
             
-                ```json
+                ```js
                 {
                     "email": "blancheday@ontagene123.com" // email not in database
                 }
@@ -493,7 +493,7 @@ What is really required is the implementation of the core functionality of each 
 
             * Write the request data as **`raw`** **`json`** in the request **body** as
             
-                ```json
+                ```js
                 {
                     "email": "blancheday@ontagene.com" // email is in database
                 }
@@ -506,5 +506,107 @@ What is really required is the implementation of the core functionality of each 
             the response the json information for the student is present.
 
             ![](readmeimages/testing3e.png)
+
+---
+
+4. **`[ GET ] ( endpoint ): /getStudents/thirties`**
+
+    ( Authorization required )
+    Respond with a list of 30 year-old students in database.
+
+    The user has to be authorized to make a successful request.
+    In other words the user must be logged in. In order to make the request
+    the `Authorization` header must be set to the `uuid` of the login response.
+
+    * ##### Implementation
+
+        1.  retrieve the request authorization header
+            if the user is not authorized return with an error response `status = 401`
+
+            ``` py
+                user_uuid = request.headers[ 'Authorization' ]
+                if not is_session_valid( user_uuid ):
+                    return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+            ```
+
+        2.  (This step is reached only in case that the previous check 
+            was false i.e. user is valid) get current year and
+            search for 30 year-old students in the database
+    
+
+            ```py
+                current_year = datetime.today().year
+                search_results = students.find( { 'yearOfBirth': ( current_year - 30 ) } )
+            ```
+
+            if no 30 year-old students are found in the database return with an error response
+
+            ```py
+                if not search_results:
+                    return Response(
+                        'No 30 year-old students found.',
+                        status = 400,
+                        mimetype = 'application/json'
+                    )
+            ```
+
+        3.  construct the students_thirties list
+
+            ```py
+                for result in search_results:
+
+                    item = {
+                        'name': result[ 'name' ],
+                        'email': result[ 'email' ],
+                        'yearOfBirth': result[  'yearOfBirth' ]
+                    }
+
+                    if 'address' in result:
+                        item[ 'address' ] = result[ 'address' ]
+
+                    if 'courses' in result:
+                        item[ 'courses' ] = result[ 'courses' ]
+
+                    students_thirties.append( item )
+
+                return Response( json.dumps( student ), status = 200, mimetype = 'application/json' )
+            ```
+
+            return with a success response containing the students_thirties list `status = 200`
+            ```py
+                return Response(
+                    json.dumps( students_thirties ),
+                    status = 200,
+                    mimetype = 'application/json'
+                )
+            ```
+
+    * ##### Testing
+
+        1.  Use **Postman** to make the request.
+        
+            * Set the request method to **`GET`**.
+            * Type **`localhost:5000/getStudents/thirties`** in the **URL field**.
+            * Set **`Authorization`** header to a random value to test authorization check.
+            * Push the **Send** button.
+
+            As shown in the screenshot below, the request got
+            an error responses with `status = 401` Unauthorized
+            since the uuid is invalid:
+
+            ![](readmeimages/testing4a.png)
+            
+
+        2. Use **Postman** to make the request.
+
+            *   Set `Authorization` header to the `uuid`
+                provided in the previous login response:
+            *   Push the **Send** button.
+
+            As shown in the screenshot below, the request is authorized
+            but an success response with `status = 200` is returned
+            with the 30 year-old students in the database.
+
+            ![](readmeimages/testing4b.png)
 
 ---

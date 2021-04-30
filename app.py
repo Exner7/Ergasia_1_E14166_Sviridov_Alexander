@@ -8,7 +8,7 @@ import uuid
 import time
 import json
 
-
+from datetime import datetime
 
 # Database interaction settings
 
@@ -151,6 +151,7 @@ def login():
 
 # 3. [ GET ] ( endpoint ): /getStudent
 #
+# ( Authorization required )
 # Given an email in the json request data
 # get student with the email from Students
 @app.route( '/getStudent', methods=[ 'GET' ] )
@@ -164,11 +165,11 @@ def get_student():
         data = json.loads( request.data )
     except Exception as e:
         # if an exception occurs while retreiving data return with an error response
-        return Response( 'Bad json data.', status = 500, mimetype = 'application/json')
+        return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
 
     if data == None:
         # if the retrieved json request data are empty return with an error response
-        return Response( 'Bad request.', status = 500, mimetype = 'application/json')
+        return Response( 'Bad request.', status = 500, mimetype = 'application/json' )
 
     if 'email' not in data:
         # if username or password is not in tha json request data return with an error response
@@ -185,7 +186,7 @@ def get_student():
 
     if not found:
         # if no student with the provided email is found return with an error response
-        return Response( 'Student not found.', status = 400, mimetype = 'application/json')
+        return Response( 'Student not found.', status = 400, mimetype = 'application/json' )
 
     # construct student dictionary
 
@@ -198,6 +199,55 @@ def get_student():
         student[ 'courses' ] = found[ 'courses' ]
 
     return Response( json.dumps( student ), status = 200, mimetype = 'application/json' )
+
+
+
+# 4. [ GET ] ( endpoint ): /getStudents/thirties
+#
+# ( Authorization required )
+# Respond with a list of 30 year-old students in database.
+@app.route( '/getStudents/thirties', methods = [ 'GET' ] )
+def get_students_thirties():
+
+    # retrieve the request authorization header
+    user_uuid = request.headers[ 'Authorization' ]
+
+    if not is_session_valid( user_uuid ):
+        # if the user is not authorized return with an error response
+        return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+
+    # get current year
+    current_year = datetime.today().year
+
+    # search for 30 year-old students in the database
+    search_results = students.find( { 'yearOfBirth': ( current_year - 30 ) } )
+
+    if not search_results:
+        # if no 30 year-old students are found in the database return with an error response
+        return Response( 'No 30 year-old students found.', status = 400, mimetype = 'application/json' )
+
+    # initialize students list
+    students_thirties = []
+
+    # construct the students_thirties list
+    for result in search_results:
+
+        item = {
+            'name': result[ 'name' ],
+            'email': result[ 'email' ],
+            'yearOfBirth': result[  'yearOfBirth' ]
+        }
+
+        if 'address' in result:
+            item[ 'address' ] = result[ 'address' ]
+
+        if 'courses' in result:
+            item[ 'courses' ] = result[ 'courses' ]
+
+        students_thirties.append( item )
+
+    # return with a success response containing the students_thirties list
+    return Response( json.dumps( students_thirties ), status = 200, mimetype = 'application/json' )    
 
 
 
