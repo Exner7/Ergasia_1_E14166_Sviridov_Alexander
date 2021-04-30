@@ -92,7 +92,7 @@ with a rudimentary login authentication and session authorization system.
 
 * ##### *Initial `app.py`* script
 
-    The **initial** `app.py` script (provided by the lab professors) can be described abstractly by the following steps:
+    The **initial** `app.py` script (provided by the professors) can be described abstractly by the following steps:
 
     1. *Import all of the necessary modules for the whole project*
     2. *Connect to the local mongodb and access the database InfoSys*
@@ -114,7 +114,7 @@ with a rudimentary login authentication and session authorization system.
         Each user session is in the format: `user_uuid: (username, time)`.
         So the `users_sessions` at any point (if not empty) is in the form:
         
-        ```json
+        ```py
         users_sessions: {
             user_uuid_1: [ username_1, time_1 ],
             user_uuid_2: [ username_2, time_2 ],
@@ -150,6 +150,8 @@ with a rudimentary login authentication and session authorization system.
 
 It is recommended to use [Postman](https://www.postman.com/) for testing this
 application and to make requests to all the API Endpoints.
+During testing the flask app and mongodb must be running,
+the students collection must be populated with the students.json file.
 
 ---
 
@@ -235,8 +237,8 @@ What is really required is the implementation of the core functionality of each 
 
         2.  Use **Postman** to make the request.
         
-            * Type **`localhost:5000/createUser`** in the **URL field**.
             * Set the request method to **`POST`**.
+            * Type **`localhost:5000/createUser`** in the **URL field**.
             * Write the request data as **`raw`** **`json`** in the request **body** as
             
                 ```json
@@ -321,14 +323,14 @@ What is really required is the implementation of the core functionality of each 
 
         1.  Use **Postman** to make the request.
         
-            * Type **`localhost:5000/createUser`** in the **URL field**.
             * Set the request method to **`POST`**.
+            * Type **`localhost:5000/createUser`** in the **URL field**.
             * Write the request data as **`raw`** **`json`** in the request **body** as
             
                 ```json
                 {
                     "username": "sherlock",
-                    "password": "morimorimorimoriarty"
+                    "password": "morimorimorimoriarty" // wrong password
                 }
                 ```
             * Push the **Send** button.
@@ -341,14 +343,14 @@ What is really required is the implementation of the core functionality of each 
 
         2.  Use **Postman** to make the request.
         
-            * Type **`localhost:5000/createUser`** in the **URL field**.
             * Set the request method to **`POST`**.
+            * Type **`localhost:5000/createUser`** in the **URL field**.
             * Write the request data as **`raw`** **`json`** in the request **body** as
             
                 ```json
                 {
                     "username": "sherlock",
-                    "password": "sherl0cked"
+                    "password": "sherl0cked" // correct password
                 }
                 ```
             * Push the **Send** button.
@@ -369,5 +371,140 @@ What is really required is the implementation of the core functionality of each 
             the dictionary was indeed updated with the new session:
 
             ![](readmeimages/testing2c.png)
+
+---
+
+3. **`[ GET ] ( endpoint ): /getStudent`**
+
+    Expects user to pass json data to the body of the request.
+    An example for the expected format for the json is shown:
+
+    ```json
+    {
+        "email": "sherlock@outlook.com"
+    }
+    ```
+    The endpoint's method `get_student()` requests the json,
+    handles the cases for exceptions, improper json content
+    and incomplete json information, returning with the
+    appropriate response for each case.
+
+    The user has to be authorized to make a successful request.
+    In other words the user must be logged in. In order to make the request
+    the `Authorization` header must be set to the `uuid` of the login response.
+
+    * ##### Implementation
+
+        1.  retrieve the request authorization header
+            if the user is not authorized return with an error response `status = 401`
+
+            ``` py
+                user_uuid = request.headers[ 'Authorization' ]
+                if not is_session_valid( user_uuid ):
+                    return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+            ```
+
+        2.  (This step is reached only in case that the previous check 
+            was false i.e. user is valid) search for a student with the provided email
+
+            ```py
+                found = students.find_one( { 'email': data[ 'email' ] } )
+            ```
+
+            if no student with the provided email is found return with an error response `status = 400`
+
+            ```py
+                if not found:
+                    return Response( 'Student not found.', status = 400, mimetype = 'application/json')
+            ```
+
+        3.  construct student dictionary and return with a response containing the student `status = 200`:
+
+            ```py
+                student = {
+                    'name': found[ 'name' ],
+                    'email': found[ 'email' ],
+                    'yearOfBirth': found[ 'yearOfBirth' ]
+                }
+
+                if 'address' in found:
+                    student[ 'address' ] = found[ 'address' ]
+
+                if 'courses' in found:
+                    student[ 'courses' ] = found[ 'courses' ]
+
+                return Response( json.dumps( student ), status = 200, mimetype = 'application/json' )
+            ```
+
+    * ##### Testing
+
+        1.  Use **Postman** to make the request.
+        
+            * Set the request method to **`GET`**.
+            * Type **`localhost:5000/getStudent`** in the **URL field**.
+            * Set **`Authorization`** header to a random value to test authorization check.
+
+                ![](readmeimages/testing3a.png)
+
+            * Write the request data as **`raw`** **`json`** in the request **body** as
+            
+                ```json
+                {
+                    "email": "blancheday@ontagene123.com" // email not in database
+                }
+                ```
+            * Push the **Send** button.
+
+            As shown in the screenshot below, the request
+            got an error responses with `status = 401` Unauthorized
+            since the uuid is invalid:
+
+            ![](readmeimages/testing3a.png)
+            
+
+        2. Use **Postman** to make the request.
+
+            *   Set `Authorization` header to the `uuid`
+                provided in the previous login response:
+
+                ![](readmeimages/testing3c.png)
+
+            * Write the request data as **`raw`** **`json`** in the request **body** as
+            
+                ```json
+                {
+                    "email": "blancheday@ontagene123.com" // email not in database
+                }
+                ```
+            * Push the **Send** button.
+
+            As shown in the screenshot below, the request is authorized
+            but an error response with `status = 400` is returned since
+            no student with the provided email is found in the database.
+
+            ![](readmeimages/testing3d.png)
+         
+         3. Use **Postman** to make the request.
+
+            *   Set `Authorization` header to the `uuid`
+                provided in the previous login response:
+
+                ![](readmeimages/testing3c.png)
+
+            * Write the request data as **`raw`** **`json`** in the request **body** as
+            
+                ```json
+                {
+                    "email": "blancheday@ontagene.com" // email is in database
+                }
+                ```
+            * Push the **Send** button.
+
+            As shown in the screenshot below, the request is authorized
+            and a success response with `status = 200` is returned since
+            a student with the provided email exists in the database. In
+            the response the json information for the student is present.
+
+            ![](readmeimages/testing3e.png)
 
 ---
