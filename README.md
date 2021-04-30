@@ -54,7 +54,7 @@ with a rudimentary login authentication and session authorization system.
 
     * and the **Users** collection.
 
-    ![database](readmeimages/database.png)
+    ![database](images/database.png)
 
 #### The Flask application
 
@@ -135,7 +135,7 @@ with a rudimentary login authentication and session authorization system.
         3. It inserts `user_uuid: (username, time)` as a new key-value in the `users_sessions` dictionary.
         4. It returns the generated `user_uuid`.
 
-        ![create_session](readmeimages/createsession.png)
+        ![create_session](images/createsession.png)
 
     * The `is_session_valid(user_uuid)` function:
         Checks if the user has an valid or active session:
@@ -144,7 +144,7 @@ with a rudimentary login authentication and session authorization system.
             * if it is, it returns `True`.
             * if it is **not**, it returns `False`.
 
-        ![is_session_valid](readmeimages/issessionvalid.png)
+        ![is_session_valid](images/issessionvalid.png)
 
 #### Testing the application
 
@@ -233,7 +233,7 @@ What is really required is the implementation of the core functionality of each 
 
             Using database database **InfoSys** find all Users (should be empty):
             
-            ![](readmeimages/testing1a.png)
+            ![](images/testing1a.png)
 
         2.  Use **Postman** to make the request.
         
@@ -252,17 +252,17 @@ What is really required is the implementation of the core functionality of each 
             As shown in the screenshot below, the request
             got a success responses with `status = 200`:
             
-            ![](readmeimages/testing1b.png)
+            ![](images/testing1b.png)
 
             
         3.  Using mongo shell find all Users after the request (user is indeed inserted)
         
-            ![](readmeimages/testing1c.png)
+            ![](images/testing1c.png)
 
         4.  If the exact same request is made since a user with the username given
             in the data already exists an error response is returned `status = 400`:
 
-            ![](readmeimages/testing1d.png)
+            ![](images/testing1d.png)
 
 ---
 
@@ -339,7 +339,7 @@ What is really required is the implementation of the core functionality of each 
             got an error responses with `status = 400`
             since the password did not match:
             
-            ![](readmeimages/testing2a.png)
+            ![](images/testing2a.png)
 
         2.  Use **Postman** to make the request.
         
@@ -360,7 +360,7 @@ What is really required is the implementation of the core functionality of each 
             and in the response body we get a uuid along
             with the username:
         
-            ![](readmeimages/testing2b.png)
+            ![](images/testing2b.png)
 
             In a successful login the `users_sessions` dictionary is updated
             with an entry like `user_uuid: [ username, time ]`.
@@ -370,7 +370,7 @@ What is really required is the implementation of the core functionality of each 
             The screenshot below shows that
             the dictionary was indeed updated with the new session:
 
-            ![](readmeimages/testing2c.png)
+            ![](images/testing2c.png)
 
 ---
 
@@ -444,7 +444,7 @@ What is really required is the implementation of the core functionality of each 
             * Type **`localhost:5000/getStudent`** in the **URL field**.
             * Set **`Authorization`** header to a random value to test authorization check.
 
-                ![](readmeimages/testing3a.png)
+                ![](images/testing3a.png)
 
             * Write the request data as **`raw`** **`json`** in the request **body** as
             
@@ -459,7 +459,7 @@ What is really required is the implementation of the core functionality of each 
             got an error responses with `status = 401` Unauthorized
             since the uuid is invalid:
 
-            ![](readmeimages/testing3b.png)
+            ![](images/testing3b.png)
             
 
         2. Use **Postman** to make the request.
@@ -467,7 +467,7 @@ What is really required is the implementation of the core functionality of each 
             *   Set `Authorization` header to the `uuid`
                 provided in the previous login response:
 
-                ![](readmeimages/testing3c.png)
+                ![](images/testing3c.png)
 
             * Write the request data as **`raw`** **`json`** in the request **body** as
             
@@ -482,14 +482,14 @@ What is really required is the implementation of the core functionality of each 
             but an error response with `status = 400` is returned since
             no student with the provided email is found in the database.
 
-            ![](readmeimages/testing3d.png)
+            ![](images/testing3d.png)
          
          3. Use **Postman** to make the request.
 
             *   Set `Authorization` header to the `uuid`
                 provided in the previous login response:
 
-                ![](readmeimages/testing3c.png)
+                ![](images/testing3c.png)
 
             * Write the request data as **`raw`** **`json`** in the request **body** as
             
@@ -505,7 +505,7 @@ What is really required is the implementation of the core functionality of each 
             a student with the provided email exists in the database. In
             the response the json information for the student is present.
 
-            ![](readmeimages/testing3e.png)
+            ![](images/testing3e.png)
 
 ---
 
@@ -525,8 +525,13 @@ What is really required is the implementation of the core functionality of each 
 
             ``` py
                 user_uuid = request.headers[ 'Authorization' ]
+
                 if not is_session_valid( user_uuid ):
-                    return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+                    return Response(
+                        'Unauthorized.',
+                        status = 401,
+                        mimetype = 'application/json'
+                    )
             ```
 
         2.  (This step is reached only in case that the previous check 
@@ -536,23 +541,15 @@ What is really required is the implementation of the core functionality of each 
 
             ```py
                 current_year = datetime.today().year
+                
                 search_results = students.find( { 'yearOfBirth': ( current_year - 30 ) } )
-            ```
-
-            if no 30 year-old students are found in the database return with an error response
-
-            ```py
-                if not search_results:
-                    return Response(
-                        'No 30 year-old students found.',
-                        status = 400,
-                        mimetype = 'application/json'
-                    )
             ```
 
         3.  construct the students_thirties list
 
             ```py
+                students_thirties = []
+
                 for result in search_results:
 
                     item = {
@@ -568,11 +565,20 @@ What is really required is the implementation of the core functionality of each 
                         item[ 'courses' ] = result[ 'courses' ]
 
                     students_thirties.append( item )
-
-                return Response( json.dumps( student ), status = 200, mimetype = 'application/json' )
             ```
 
-            return with a success response containing the students_thirties list `status = 200`
+        4.  if no 30 year-old students are found in the database return with an error response
+
+            ```py
+                if not students_thirties:
+                    return Response(
+                        'No 30 year-old students found.',
+                        status = 400,
+                        mimetype = 'application/json'
+                    )
+            ```
+
+        5.  return with a success response containing the students_thirties list `status = 200`
             ```py
                 return Response(
                     json.dumps( students_thirties ),
@@ -594,7 +600,7 @@ What is really required is the implementation of the core functionality of each 
             an error responses with `status = 401` Unauthorized
             since the uuid is invalid:
 
-            ![](readmeimages/testing4a.png)
+            ![](images/testing4a.png)
             
 
         2. Use **Postman** to make the request.
@@ -604,9 +610,120 @@ What is really required is the implementation of the core functionality of each 
             *   Push the **Send** button.
 
             As shown in the screenshot below, the request is authorized
-            but an success response with `status = 200` is returned
+            but a success response with `status = 200` is returned
             with the 30 year-old students in the database.
 
-            ![](readmeimages/testing4b.png)
+            ![](images/testing4b.png)
+
+---
+
+5. **`[ GET ] ( endpoint ): /getStudents/oldies`**
+
+    ( Authorization required )
+    Respond with a list of students that are older than 30.
+
+    The user has to be authorized to make a successful request.
+    In other words the user must be logged in. In order to make the request
+    the `Authorization` header must be set to the `uuid` of the login response.
+
+    * ##### Implementation
+
+        1.  retrieve the request authorization header
+            if the user is not authorized return with an error response `status = 401`
+
+            ``` py
+                user_uuid = request.headers[ 'Authorization' ]
+
+                if not is_session_valid( user_uuid ):
+                    return Response(
+                        'Unauthorized.',
+                        status = 401,
+                        mimetype = 'application/json'
+                    )
+            ```
+
+        2.  (This step is reached only in case that the previous check 
+            was false i.e. user is valid) get current year and
+            search for students over 30 in the database
+    
+
+            ```py
+                current_year = datetime.today().year
+                
+                search_results = students.find( {
+                    'yearOfBirth': { '$lt': ( current_year - 30 ) }
+                } )
+            ```
+
+        3.  construct the students_oldies list
+
+            ```py
+                students_oldies = []
+
+                for result in search_results:
+
+                    item = {
+                        'name': result[ 'name' ],
+                        'email': result[ 'email' ],
+                        'yearOfBirth': result[  'yearOfBirth' ]
+                    }
+
+                    if 'address' in result:
+                        item[ 'address' ] = result[ 'address' ]
+
+                    if 'courses' in result:
+                        item[ 'courses' ] = result[ 'courses' ]
+
+                    students_oldies.append( item )
+            ```
+
+        4.  if no students over 30 are found in the database return with an error response
+
+            ```py
+                if not students_oldies:
+                    return Response(
+                        'No students over 30 were found.',
+                        status = 400,
+                        mimetype = 'application/json'
+                    )
+            ```
+
+        5.  return with a success response containing the students_oldies list
+            `status = 200`
+            ```py
+                return Response(
+                    json.dumps( students_oldies ),
+                    status = 200,
+                    mimetype = 'application/json'
+                )
+            ```
+
+    * ##### Testing
+
+        1.  Use **Postman** to make the request.
+        
+            * Set the request method to **`GET`**.
+            * Type **`localhost:5000/getStudents/oldies`** in the **URL field**.
+            * Set **`Authorization`** header to a random value to test authorization check.
+            * Push the **Send** button.
+
+            As shown in the screenshot below, the request got
+            an error responses with `status = 401` Unauthorized
+            since the uuid is invalid:
+
+            ![](images/testing5a.png)
+            
+
+        2. Use **Postman** to make the request.
+
+            *   Set `Authorization` header to the `uuid`
+                provided in the previous login response:
+            *   Push the **Send** button.
+
+            As shown in the screenshot below, the request is authorized
+            but a success response with `status = 200` is returned
+            with all students over 30 years old in the database.
+
+            ![](images/testing5b.png)
 
 ---

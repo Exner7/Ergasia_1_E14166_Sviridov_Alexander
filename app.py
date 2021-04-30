@@ -222,10 +222,6 @@ def get_students_thirties():
     # search for 30 year-old students in the database
     search_results = students.find( { 'yearOfBirth': ( current_year - 30 ) } )
 
-    if not search_results:
-        # if no 30 year-old students are found in the database return with an error response
-        return Response( 'No 30 year-old students found.', status = 400, mimetype = 'application/json' )
-
     # initialize students list
     students_thirties = []
 
@@ -235,7 +231,7 @@ def get_students_thirties():
         item = {
             'name': result[ 'name' ],
             'email': result[ 'email' ],
-            'yearOfBirth': result[  'yearOfBirth' ]
+            'yearOfBirth': result[  'yearOfBirth' ] 
         }
 
         if 'address' in result:
@@ -246,8 +242,61 @@ def get_students_thirties():
 
         students_thirties.append( item )
 
+    if not students_thirties:
+        # if no 30 year-old students are found in the database return with an error response
+        return Response( 'No 30 year-old students found.', status = 400, mimetype = 'application/json' )
+
     # return with a success response containing the students_thirties list
-    return Response( json.dumps( students_thirties ), status = 200, mimetype = 'application/json' )    
+    return Response( json.dumps( students_thirties ), status = 200, mimetype = 'application/json' )
+
+
+
+# 5. [ GET ] ( endpoint ): /getStudents/oldies
+#
+# ( Authorization required )
+# Respond with a list of students that are older than 30.
+@app.route( '/getStudents/oldies', methods = [ 'GET' ] )
+def get_students_oldies():
+
+    # retrieve the request authorization header
+    user_uuid = request.headers[ 'Authorization' ]
+
+    if not is_session_valid( user_uuid ):
+        # if the user is not authorized return with an error response
+        return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+
+    # get current year
+    current_year = datetime.today().year
+
+    # search for students over 30 in the database
+    search_results = students.find( { 'yearOfBirth': { '$lt': ( current_year - 30 ) } } )
+
+    # initialize students list
+    students_oldies = []
+
+    # construct the students_oldies list
+    for result in search_results:
+
+        item = {
+            'name': result[ 'name' ],
+            'email': result[ 'email' ],
+            'yearOfBirth': result[  'yearOfBirth' ] 
+        }
+
+        if 'address' in result:
+            item[ 'address' ] = result[ 'address' ]
+
+        if 'courses' in result:
+            item[ 'courses' ] = result[ 'courses' ]
+
+        students_oldies.append( item )
+
+    if not students_oldies:
+        # if no students over 30 are found in the database return with an error response
+        return Response( 'No students over 30 were found.', status = 400, mimetype = 'application/json' )
+
+    # return with a success response containing the students_oldies list
+    return Response( json.dumps( students_oldies ), status = 200, mimetype = 'application/json' )
 
 
 
