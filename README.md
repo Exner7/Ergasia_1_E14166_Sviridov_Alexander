@@ -1,4 +1,4 @@
-# Semester Project #01
+# Semester Project #1
 
 ## DS-UNIPI: Information Systems - 2021
 
