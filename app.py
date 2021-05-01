@@ -366,7 +366,7 @@ def get_student_address():
     if 'address' not in found:
         # if the student found has no address return with an error response
         return Response(
-            'The user with the email ' + data[ 'email' ] + ' has no address.',
+            'The student with the email ' + data[ 'email' ] + ' has no address.',
             status = 400, mimetype = 'application/json' )
 
     # construct student dictionary
@@ -451,7 +451,7 @@ def add_courses():
         # if the user is not authorized return with an error response
         return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
 
-     # initialize request data object
+    # initialize request data object
     data = None
 
     try:
@@ -485,6 +485,89 @@ def add_courses():
 
     # return with a success response
     return Response( 'Student updated successfully.', status = 200, mimetype = 'application/json')
+
+
+
+# 9. [ GET ] ( endpoint ): /getPassedCourses
+#
+# ( Authorization required )
+# Return a list of passed courses of
+# the student with the provided email
+@app.route( '/getPassedCourses', methods = [ 'GET' ] )
+def get_passed_courses():
+
+    # Authorization validation ...
+
+    user_uuid = None
+
+    try:
+        # retrieve the request authorization header
+        user_uuid = request.headers[ 'Authorization' ]
+    except Exception as e:
+        # if an exception occurs while retreiving authorization return with an error response
+        return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
+
+    if not is_session_valid( user_uuid ):
+        # if the user is not authorized return with an error response
+        return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+
+    # Data validation ...
+
+    # initialize request data object
+    data = None
+
+    try:
+        #retrieve the json request data
+        data = json.loads( request.data )
+    except Exception as e:
+        # if an exception occurs while retreiving data return with an error response
+        return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
+
+    if data == None:
+        # if the retrieved json request data are empty return with an error response
+        return Response( 'Bad request.', status = 500, mimetype = 'application/json' )
+
+    if 'email' not in data:
+        # if email or courses is not in tha json request data return with an error response
+        return Response( 'Incomplete information.', status = 500, mimetype = 'application/json' )
+
+    # Student search ...
+
+    # search database for the student with the provided email
+    found = students.find_one( { 'email': data[ 'email' ] } )
+
+    if not found:
+        # if no student with the provided email is found return with an error response
+        return Response( 'Student not found.', status = 400, mimetype = 'application/json' )
+    
+    # Courses check ...
+
+    if 'courses' not in found:
+        # if the student found has no courses return with an error response
+        return Response(
+            'The student with the email ' + data[ 'email' ] + ' has no courses.',
+            status = 400, mimetype = 'application/json' )
+
+    # Filter passed courses ...
+
+    passed_courses = []
+
+    for item in found[ 'courses' ]:
+        if 5 <= list( item.values() )[ 0 ]:
+            passed_courses.append( item )
+    
+    if len( passed_courses ) == 0:
+        # if the student has no passed courses return with an error response
+        return Response(
+            'The student with the email ' + data[ 'email' ] + ' has no passed courses.',
+            status = 400, mimetype = 'application/json' )
+
+    # Construct output ...
+
+    student = { 'name': found[ 'name' ], 'passed courses': passed_courses }
+
+    # Response ...
+    return Response( json.dumps( student ), status = 200, mimetype = 'application/json' )
 
 
 

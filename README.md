@@ -964,3 +964,92 @@ What is really required is the implementation of the core functionality of each 
                 return Response(
                     'Student updated successfully.', status = 200, mimetype = 'application/json')
             ```
+
+---
+
+9. **`[ GET ] ( endpoint ): /getPassedCourses`**
+
+    Expects user to pass json data to the body of the request.
+    An example for the expected format for the json is shown:
+
+    ```json
+    {
+        "email": "blancheday@ontagene.com"
+    }
+    ```
+    The endpoint's method `get_passed_courses()` requests the json,
+    handles the cases for exceptions, improper json content
+    and incomplete json information, returning with the
+    appropriate response for each case.
+
+    The user has to be authorized to make a successful request.
+    In other words the user must be logged in. In order to make the request
+    the `Authorization` header must be set to the `uuid` of the login response.
+
+    * ##### Implementation
+
+        1.  ( *Authorization* )
+            retrieve the request authorization header ( the `user_uuid` )
+            if an exception occurs while retreiving authorization
+            return with an error response `status = 500`
+
+            Validate authorization using `is_session_valid( user_uuid )`
+            if the user is not authorized return with an error response `status = 401`
+
+            ``` py
+                user_uuid = None
+
+                try:
+                    user_uuid = request.headers[ 'Authorization' ]
+                except Exception as e:
+                    return Response(
+                        'Authorization Key Error', status = 500, mimetype = 'application/json' )
+
+                if not is_session_valid( user_uuid ): 
+                    return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+            ```
+        
+        2.  Search database for the student with the provided email.
+            If no student with the provided email is found return with an error response:
+
+            ``` py
+                found = students.find_one( { 'email': data[ 'email' ] } )
+
+                if not found:
+
+                    return Response(
+                        'Student not found.', status = 400, mimetype = 'application/json' )
+            ```
+        
+            If the student found has no courses return with an error response:
+
+            ```py
+                if 'courses' not in found:
+
+                return Response(
+                    'The student with the email ' + data[ 'email' ] + ' has no courses.',
+                    status = 400, mimetype = 'application/json' )
+            ```
+        
+        3.  Filter passed courses.
+            If the student has no passed courses return with an error response:
+
+            ```py
+                passed_courses = []
+
+                for item in found[ 'courses' ]:
+                    if 5 <= list( item.values() )[ 0 ]:
+                        passed_courses.append( item )
+                
+                if len( passed_courses ) == 0:
+                    return Response(
+                        'The student with the email ' + data[ 'email' ] + ' has no passed courses.',
+                        status = 400, mimetype = 'application/json' )
+            ```
+        
+        4.  Construct output and return with a success respond containing the output
+
+            ```py
+                student = { 'name': found[ 'name' ], 'passed courses': passed_courses }
+                return Response( json.dumps( student ), status = 200, mimetype = 'application/json' )
+            ```
