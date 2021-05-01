@@ -395,12 +395,23 @@ What is really required is the implementation of the core functionality of each 
 
     * ##### Implementation
 
-        1.  retrieve the request authorization header
+        1.  ( *Authorization* )
+            retrieve the request authorization header ( the `user_uuid` )
+            if an exception occurs while retreiving data return with an error response `status = 500`
+
+            Validate authorization using `is_session_valid( user_uuid )`
             if the user is not authorized return with an error response `status = 401`
 
             ``` py
-                user_uuid = request.headers[ 'Authorization' ]
-                if not is_session_valid( user_uuid ):
+                user_uuid = None
+
+                try:
+                    user_uuid = request.headers[ 'Authorization' ]
+                except Exception as e:
+                    return Response(
+                        'Authorization Key Error', status = 500, mimetype = 'application/json' )
+
+                if not is_session_valid( user_uuid ): 
                     return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
             ```
 
@@ -520,18 +531,24 @@ What is really required is the implementation of the core functionality of each 
 
     * ##### Implementation
 
-        1.  retrieve the request authorization header
+        1.  ( *Authorization* )
+            retrieve the request authorization header ( the `user_uuid` )
+            if an exception occurs while retreiving data return with an error response `status = 500`
+
+            Validate authorization using `is_session_valid( user_uuid )`
             if the user is not authorized return with an error response `status = 401`
 
             ``` py
-                user_uuid = request.headers[ 'Authorization' ]
+                user_uuid = None
 
-                if not is_session_valid( user_uuid ):
+                try:
+                    user_uuid = request.headers[ 'Authorization' ]
+                except Exception as e:
                     return Response(
-                        'Unauthorized.',
-                        status = 401,
-                        mimetype = 'application/json'
-                    )
+                        'Authorization Key Error', status = 500, mimetype = 'application/json' )
+
+                if not is_session_valid( user_uuid ): 
+                    return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
             ```
 
         2.  (This step is reached only in case that the previous check 
@@ -620,7 +637,7 @@ What is really required is the implementation of the core functionality of each 
 5. **`[ GET ] ( endpoint ): /getStudents/oldies`**
 
     ( Authorization required )
-    Respond with a list of students that are older than 30.
+    Respond with a list of students that are at least 30 years old.
 
     The user has to be authorized to make a successful request.
     In other words the user must be logged in. In order to make the request
@@ -628,30 +645,36 @@ What is really required is the implementation of the core functionality of each 
 
     * ##### Implementation
 
-        1.  retrieve the request authorization header
+        1.  ( *Authorization* )
+            retrieve the request authorization header ( the `user_uuid` )
+            if an exception occurs while retreiving data return with an error response `status = 500`
+
+            Validate authorization using `is_session_valid( user_uuid )`
             if the user is not authorized return with an error response `status = 401`
 
             ``` py
-                user_uuid = request.headers[ 'Authorization' ]
+                user_uuid = None
 
-                if not is_session_valid( user_uuid ):
+                try:
+                    user_uuid = request.headers[ 'Authorization' ]
+                except Exception as e:
                     return Response(
-                        'Unauthorized.',
-                        status = 401,
-                        mimetype = 'application/json'
-                    )
+                        'Authorization Key Error', status = 500, mimetype = 'application/json' )
+
+                if not is_session_valid( user_uuid ): 
+                    return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
             ```
 
         2.  (This step is reached only in case that the previous check 
             was false i.e. user is valid) get current year and
-            search for students over 30 in the database
+            search for students that are at least 30 years old in the database
     
 
             ```py
                 current_year = datetime.today().year
                 
                 search_results = students.find( {
-                    'yearOfBirth': { '$lt': ( current_year - 30 ) }
+                    'yearOfBirth': { '$lte': ( current_year - 30 ) }
                 } )
             ```
 
@@ -682,20 +705,16 @@ What is really required is the implementation of the core functionality of each 
             ```py
                 if not students_oldies:
                     return Response(
-                        'No students over 30 were found.',
+                        'No students that are at least 30 years old found.',
                         status = 400,
-                        mimetype = 'application/json'
-                    )
+                        mimetype = 'application/json' )
             ```
 
         5.  return with a success response containing the students_oldies list
             `status = 200`
             ```py
                 return Response(
-                    json.dumps( students_oldies ),
-                    status = 200,
-                    mimetype = 'application/json'
-                )
+                    json.dumps( students_oldies ), status = 200, mimetype = 'application/json' )
             ```
 
     * ##### Testing
@@ -704,7 +723,7 @@ What is really required is the implementation of the core functionality of each 
         
             * Set the request method to **`GET`**.
             * Type **`localhost:5000/getStudents/oldies`** in the **URL field**.
-            * Set **`Authorization`** header to a random value to test authorization check.
+            * Set **`Authorization`** header at random to test authorization check.
             * Push the **Send** button.
 
             As shown in the screenshot below, the request got
@@ -712,7 +731,7 @@ What is really required is the implementation of the core functionality of each 
             since the uuid is invalid:
 
             ![](images/testing5a.png)
-            
+
 
         2. Use **Postman** to make the request.
 
@@ -722,8 +741,128 @@ What is really required is the implementation of the core functionality of each 
 
             As shown in the screenshot below, the request is authorized
             but a success response with `status = 200` is returned
-            with all students over 30 years old in the database.
+            with all the students that are at least 30 years old in the database.
 
             ![](images/testing5b.png)
 
 ---
+
+6. **`[ GET ] ( endpoint ): /getStudentAddress`**
+
+    ( Authorization required )
+    Find a student that has an address by a given email.
+
+    The user has to be authorized to make a successful request.
+    In other words the user must be logged in. In order to make the request
+    the `Authorization` header must be set to the `uuid` of the login response.
+
+    * ##### Implementation
+
+        1.  ( *Authorization* )
+            retrieve the request authorization header ( the `user_uuid` )
+            if an exception occurs while retreiving data return with an error response `status = 500`
+
+            Validate authorization using `is_session_valid( user_uuid )`
+            if the user is not authorized return with an error response `status = 401`
+
+            ``` py
+                user_uuid = None
+
+                try:
+                    user_uuid = request.headers[ 'Authorization' ]
+                except Exception as e:
+                    return Response(
+                        'Authorization Key Error', status = 500, mimetype = 'application/json' )
+
+                if not is_session_valid( user_uuid ): 
+                    return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+        
+         2. Search for the student with the provided email in the Students collection.
+            If no student with the provided email is found return with an error response.
+            If the student found has no address return with an error response.
+
+            ```py
+                found = students.find_one( { 'email': data[ 'email' ] } )
+
+                if not found:
+                    return Response(
+                        'Student not found.', status = 400, mimetype = 'application/json' )
+                
+                if 'address' not in found:
+                    return Response(
+                        'The user with the email ' + data[ 'email' ] + ' has no address.',
+                        status = 400,
+                        mimetype = 'application/json' )
+            ```
+
+        3.  Construct the student dictionary.
+            return with a success response containing the student's address information
+
+            ```py
+
+                street = found[ 'address' ][ 0 ][ 'street' ]
+                postcode = found[ 'address' ][ 0 ][ 'postcode' ]
+
+                student = { 'name': found[ 'name' ], 'street': street, 'postcode': postcode }
+
+                return Response( json.dumps( student ), status = 200, mimetype = 'application/json' )
+            ```
+
+---
+
+7. **`[ DELETE ] ( endpoint ): /deleteStudent`**
+
+    Expects user to pass json data to the body of the request.
+    An example for the expected format for the json is shown:
+
+    ```json
+    {
+        "email": "blancheday@ontagene.com"
+    }
+    ```
+    The endpoint's method `delete_student()` requests the json,
+    handles the cases for exceptions, improper json content
+    and incomplete json information, returning with the
+    appropriate response for each case.
+
+    The user has to be authorized to make a successful request.
+    In other words the user must be logged in. In order to make the request
+    the `Authorization` header must be set to the `uuid` of the login response.
+
+    * ##### Implementation
+
+        1.  ( *Authorization* )
+            retrieve the request authorization header ( the `user_uuid` )
+            if an exception occurs while retreiving data return with an error response `status = 500`
+
+            Validate authorization using `is_session_valid( user_uuid )`
+            if the user is not authorized return with an error response `status = 401`
+
+            ``` py
+                user_uuid = None
+
+                try:
+                    user_uuid = request.headers[ 'Authorization' ]
+                except Exception as e:
+                    return Response(
+                        'Authorization Key Error', status = 500, mimetype = 'application/json' )
+
+                if not is_session_valid( user_uuid ): 
+                    return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+            ```
+
+        2.  Try to delete the student with the provided email from the Students collection.
+            If the student with the given email wasn't deleted return with an error response.
+
+            ```py
+                if not students.delete_one( { 'email': data['email'] } ).deleted_count:
+                    return Response(
+                        'Student not found.', status = 400, mimetype = 'application/json' )
+            ```
+        4. (The if statment's condition was false i.e. students was deleted)
+            return with a success response.
+            ```py
+
+                return Response(
+                    'Student deleted successfully.', status = 200, mimetype = 'application/json' )
+            ```
