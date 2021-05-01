@@ -587,11 +587,11 @@ so this parts of the endpoints are not described.
         5.  Return with a success response containing the students_thirties list `status = 200`:
 
             ```py
-                return Response(
-                    json.dumps( students_thirties ),
-                    status = 200,
-                    mimetype = 'application/json'
-                )
+            return Response(
+                json.dumps( students_thirties ),
+                status = 200,
+                mimetype = 'application/json'
+            )
             ```
 
     * ##### Testing

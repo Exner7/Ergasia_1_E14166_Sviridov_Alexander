@@ -59,20 +59,6 @@ app = Flask( __name__ )
 
 
 
-# ...................................
-
-# [ GET ] ( endpoint ): /
-#
-# this route is used for test purposes
-# returns the jsonified users_sessions
-@app.route( '/', methods = [ 'GET' ] )
-def get_sessions():
-    return jsonify( users_sessions )
-
-# ...................................
-
-
-
 # 1. [ POST ] ( endpoint ): /createUser
 #
 # Get username, password from json request data
