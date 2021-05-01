@@ -10,6 +10,8 @@ import json
 
 from datetime import datetime
 
+
+
 # Database interaction settings
 
 # Connect to local mongodb
