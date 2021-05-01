@@ -163,7 +163,7 @@ def get_student():
         # retrieve the request authorization header
         user_uuid = request.headers[ 'Authorization' ]
     except Exception as e:
-        # if an exception occurs while retreiving data return with an error response
+        # if an exception occurs while retreiving authorization return with an error response
         return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
 
     if not is_session_valid( user_uuid ):
@@ -185,7 +185,7 @@ def get_student():
         return Response( 'Bad request.', status = 500, mimetype = 'application/json' )
 
     if 'email' not in data:
-        # if username or password is not in tha json request data return with an error response
+        # if email is not in tha json request data return with an error response
         return Response( 'Incomplete information.', status = 500, mimetype = 'application/json' )
 
     found = students.find_one( { 'email': data[ 'email' ] } )
@@ -221,7 +221,7 @@ def get_students_thirties():
         # retrieve the request authorization header
         user_uuid = request.headers[ 'Authorization' ]
     except Exception as e:
-        # if an exception occurs while retreiving data return with an error response
+        # if an exception occurs while retreiving authorization return with an error response
         return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
 
     if not is_session_valid( user_uuid ):
@@ -276,7 +276,7 @@ def get_students_oldies():
         # retrieve the request authorization header
         user_uuid = request.headers[ 'Authorization' ]
     except Exception as e:
-        # if an exception occurs while retreiving data return with an error response
+        # if an exception occurs while retreiving authorization return with an error response
         return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
 
     if not is_session_valid( user_uuid ):
@@ -331,7 +331,7 @@ def get_student_address():
         # retrieve the request authorization header
         user_uuid = request.headers[ 'Authorization' ]
     except Exception as e:
-        # if an exception occurs while retreiving data return with an error response
+        # if an exception occurs while retreiving authorization return with an error response
         return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
 
     if not is_session_valid( user_uuid ):
@@ -353,7 +353,7 @@ def get_student_address():
         return Response( 'Bad request.', status = 500, mimetype = 'application/json' )
 
     if 'email' not in data:
-        # if username or password is not in tha json request data return with an error response
+        # if email is not in tha json request data return with an error response
         return Response( 'Incomplete information.', status = 500, mimetype = 'application/json' )
 
     # search database for the student with the provided email
@@ -396,7 +396,7 @@ def delete_student():
         # retrieve the request authorization header
         user_uuid = request.headers[ 'Authorization' ]
     except Exception as e:
-        # if an exception occurs while retreiving data return with an error response
+        # if an exception occurs while retreiving authorization return with an error response
         return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
 
     if not is_session_valid( user_uuid ):
@@ -418,15 +418,73 @@ def delete_student():
         return Response( 'Bad request.', status = 500, mimetype = 'application/json' )
 
     if 'email' not in data:
-        # if username or password is not in tha json request data return with an error response
+        # if email is not in tha json request data return with an error response
         return Response( 'Incomplete information.', status = 500, mimetype = 'application/json' )
 
-    if not students.delete_one( { 'email': data['email'] } ).deleted_count:
+    if students.delete_one( { 'email': data['email'] } ).deleted_count == 0:
         # if the student with the given email wasn't deleted return with an error response
         return Response( 'Student not found.', status = 400, mimetype = 'application/json' )
 
     # return with a success response
     return Response( 'Student deleted successfully.', status = 200, mimetype = 'application/json' )
+
+
+
+# 8. [ PATCH ] ( endpoint ): /addCourses
+#
+# ( Authorization required )
+# Add a list of courses to a student with
+# the email provided in json request data
+@app.route( '/addCourses', methods = [ 'PATCH' ] )
+def add_courses():
+
+    user_uuid = None
+
+    try:
+        # retrieve the request authorization header
+        user_uuid = request.headers[ 'Authorization' ]
+    except Exception as e:
+        # if an exception occurs while retreiving authorization return with an error response
+        return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
+
+    if not is_session_valid( user_uuid ):
+        # if the user is not authorized return with an error response
+        return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+
+     # initialize request data object
+    data = None
+
+    try:
+        #retrieve the json request data
+        data = json.loads( request.data )
+    except Exception as e:
+        # if an exception occurs while retreiving data return with an error response
+        return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
+
+    if data == None:
+        # if the retrieved json request data are empty return with an error response
+        return Response( 'Bad request.', status = 500, mimetype = 'application/json' )
+
+    if 'email' not in data or 'courses' not in data:
+        # if email or courses is not in tha json request data return with an error response
+        return Response( 'Incomplete information.', status = 500, mimetype = 'application/json' )
+    
+    if not isinstance( data[ 'courses' ], list ):
+        # if courses is not a list return with an error response
+        return Response( 'courses should be a list.', status = 500, mimetype = 'application/json' )
+
+    for item in data[ 'courses' ]:
+        if not isinstance( item, dict ) or len( item ) != 1 or not isinstance( list( item.values() )[ 0 ], int ):
+            # if any item in the courses list is not a one-key dictionary with an integer value then return with an error response
+            return Response( 'courses should only contain one-key integer-value dictionaries.', status = 500, mimetype = 'application/json' )
+
+    # add the courses list to the student matching the given email
+    if  students.update_one( { 'email': data[ 'email' ] }, { '$set': { 'courses': data[ 'courses' ] } } ).matched_count == 0:
+        # if no student matched return with an error response
+        return Response( 'Student not found.', status = 400, mimetype = 'application/json')
+
+    # return with a success response
+    return Response( 'Student updated successfully.', status = 200, mimetype = 'application/json')
 
 
 

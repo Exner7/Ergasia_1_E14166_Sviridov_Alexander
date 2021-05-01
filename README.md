@@ -397,7 +397,8 @@ What is really required is the implementation of the core functionality of each 
 
         1.  ( *Authorization* )
             retrieve the request authorization header ( the `user_uuid` )
-            if an exception occurs while retreiving data return with an error response `status = 500`
+            if an exception occurs while retreiving authorization
+            return with an error response `status = 500`
 
             Validate authorization using `is_session_valid( user_uuid )`
             if the user is not authorized return with an error response `status = 401`
@@ -426,7 +427,8 @@ What is really required is the implementation of the core functionality of each 
 
             ```py
                 if not found:
-                    return Response( 'Student not found.', status = 400, mimetype = 'application/json')
+                    return Response(
+                        'Student not found.', status = 400, mimetype = 'application/json')
             ```
 
         3.  construct student dictionary and return with a response containing the student `status = 200`:
@@ -444,7 +446,8 @@ What is really required is the implementation of the core functionality of each 
                 if 'courses' in found:
                     student[ 'courses' ] = found[ 'courses' ]
 
-                return Response( json.dumps( student ), status = 200, mimetype = 'application/json' )
+                return Response(
+                    json.dumps( student ), status = 200, mimetype = 'application/json' )
             ```
 
     * ##### Testing
@@ -533,7 +536,8 @@ What is really required is the implementation of the core functionality of each 
 
         1.  ( *Authorization* )
             retrieve the request authorization header ( the `user_uuid` )
-            if an exception occurs while retreiving data return with an error response `status = 500`
+            if an exception occurs while retreiving authorization
+            return with an error response `status = 500`
 
             Validate authorization using `is_session_valid( user_uuid )`
             if the user is not authorized return with an error response `status = 401`
@@ -647,7 +651,8 @@ What is really required is the implementation of the core functionality of each 
 
         1.  ( *Authorization* )
             retrieve the request authorization header ( the `user_uuid` )
-            if an exception occurs while retreiving data return with an error response `status = 500`
+            if an exception occurs while retreiving authorization
+            return with an error response `status = 500`
 
             Validate authorization using `is_session_valid( user_uuid )`
             if the user is not authorized return with an error response `status = 401`
@@ -760,7 +765,8 @@ What is really required is the implementation of the core functionality of each 
 
         1.  ( *Authorization* )
             retrieve the request authorization header ( the `user_uuid` )
-            if an exception occurs while retreiving data return with an error response `status = 500`
+            if an exception occurs while retreiving authorization
+            return with an error response `status = 500`
 
             Validate authorization using `is_session_valid( user_uuid )`
             if the user is not authorized return with an error response `status = 401`
@@ -805,7 +811,8 @@ What is really required is the implementation of the core functionality of each 
 
                 student = { 'name': found[ 'name' ], 'street': street, 'postcode': postcode }
 
-                return Response( json.dumps( student ), status = 200, mimetype = 'application/json' )
+                return Response(
+                    json.dumps( student ), status = 200, mimetype = 'application/json' )
             ```
 
 ---
@@ -833,7 +840,8 @@ What is really required is the implementation of the core functionality of each 
 
         1.  ( *Authorization* )
             retrieve the request authorization header ( the `user_uuid` )
-            if an exception occurs while retreiving data return with an error response `status = 500`
+            if an exception occurs while retreiving authorization
+            return with an error response `status = 500`
 
             Validate authorization using `is_session_valid( user_uuid )`
             if the user is not authorized return with an error response `status = 401`
@@ -865,4 +873,94 @@ What is really required is the implementation of the core functionality of each 
 
                 return Response(
                     'Student deleted successfully.', status = 200, mimetype = 'application/json' )
+            ```
+---
+
+8. **`[ PATCH ] ( endpoint ): /addCourse`**
+
+    Expects user to pass json data to the body of the request.
+    An example for the expected format for the json is shown:
+
+    ```json
+    {
+        "email": "blancheday@ontagene.com",
+        "courses": [
+            { "Mathematics": 7 },
+            { "Literature": 9 },
+            { "Physics": 4 }
+        ]
+    }
+    ```
+    The endpoint's method `add_courses()` requests the json,
+    handles the cases for exceptions, improper json content
+    and incomplete json information, returning with the
+    appropriate response for each case.
+
+    The user has to be authorized to make a successful request.
+    In other words the user must be logged in. In order to make the request
+    the `Authorization` header must be set to the `uuid` of the login response.
+
+    * ##### Implementation
+
+        1.  ( *Authorization* )
+            retrieve the request authorization header ( the `user_uuid` )
+            if an exception occurs while retreiving authorization
+            return with an error response `status = 500`
+
+            Validate authorization using `is_session_valid( user_uuid )`
+            if the user is not authorized return with an error response `status = 401`
+
+            ``` py
+                user_uuid = None
+
+                try:
+                    user_uuid = request.headers[ 'Authorization' ]
+                except Exception as e:
+                    return Response(
+                        'Authorization Key Error', status = 500, mimetype = 'application/json' )
+
+                if not is_session_valid( user_uuid ): 
+                    return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+            ```
+
+        2.  Validate courses.
+
+            If courses is not a list return with an error response:
+            
+            ```py
+                if not isinstance( data[ 'courses' ], list ):
+                    return Response( 
+                        courses should be a list.', status = 500, mimetype = 'application/json' )
+            ```
+
+            If any item in the courses list is not a one-key dictionary with an integer value
+            then return with an error response:
+
+            ```py
+                for item in data[ 'courses' ]:
+                    if not isinstance( item, dict ) or len( item ) != 1
+                            or not isinstance( list( item.values() )[ 0 ], int ):
+
+                        return Response(
+                            'courses should only contain one-key integer-value dictionaries.',
+                            status = 500,
+                            mimetype = 'application/json'
+                        )
+            ```
+
+        3.  Add the courses list to the student matching the given email.
+            If no student matched return with an error response:
+            ```py
+                if  students.update_one( { 'email': data[ 'email' ] },
+                        { '$set': { 'courses': data[ 'courses' ] } } ).matched_count == 0:
+
+                    return Response(
+                        'Student not found.', status = 400, mimetype = 'application/json')
+            ```
+        
+        4.  Return with a success response `status = 200`
+
+            ```py
+                return Response(
+                    'Student updated successfully.', status = 200, mimetype = 'application/json')
             ```
