@@ -4,10 +4,11 @@ from pymongo import MongoClient
 
 from flask import Flask, jsonify, request, Response
 
-import uuid
-import time
+import uuid # for generating a user_uuid
+import time # used in session generation
 import json
 
+# for retreiving current year
 from datetime import datetime
 
 
@@ -73,7 +74,7 @@ def create_user():
     try:
         # retrieve the json request data
         data = json.loads( request.data )
-    except Exception as e:
+    except Exception:
         # if an exception occurs while retreiving data return with an error response
         return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
 
@@ -100,7 +101,7 @@ def create_user():
 # 2. [ POST ] ( endpoint ): /login
 #
 # Get username, password from json request data
-# if valid create a new session for the user
+# if valid create a new session for the user,
 # and return with a response containing uuid.
 @app.route( '/login', methods = [ 'POST' ] )
 def login():
@@ -111,7 +112,7 @@ def login():
     try:
         # retrieve the json request data
         data = json.loads( request.data )
-    except Exception as e:
+    except Exception:
         # if an exception occurs while retreiving data return with an error response
         return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
 
@@ -150,7 +151,7 @@ def get_student():
     try:
         # retrieve the request authorization header
         user_uuid = request.headers[ 'Authorization' ]
-    except Exception as e:
+    except Exception:
         # if an exception occurs while retreiving authorization return with an error response
         return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
 
@@ -162,9 +163,9 @@ def get_student():
     data = None
 
     try:
-        #retrieve the json request data
+        # retrieve the json request data
         data = json.loads( request.data )
-    except Exception as e:
+    except Exception:
         # if an exception occurs while retreiving data return with an error response
         return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
 
@@ -181,16 +182,18 @@ def get_student():
     if not found:
         # if no student with the provided email is found return with an error response
         return Response( 'Student not found.', status = 400, mimetype = 'application/json' )
-
+    
     # construct student dictionary
 
-    student = { 'name': found[ 'name' ], 'email': found[ 'email' ], 'yearOfBirth': found[ 'yearOfBirth' ] }
+    student = {}
 
-    if 'address' in found:
-        student[ 'address' ] = found[ 'address' ]
+    for key in found.keys():
 
-    if 'courses' in found:
-        student[ 'courses' ] = found[ 'courses' ]
+        # skip '_id' key
+        if key == '_id':
+            continue
+
+        student[ key ] = found[ key ]
 
     return Response( json.dumps( student ), status = 200, mimetype = 'application/json' )
 
@@ -208,7 +211,7 @@ def get_students_thirties():
     try:
         # retrieve the request authorization header
         user_uuid = request.headers[ 'Authorization' ]
-    except Exception as e:
+    except Exception:
         # if an exception occurs while retreiving authorization return with an error response
         return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
 
@@ -228,17 +231,17 @@ def get_students_thirties():
 
     for result in search_results:
 
-        item = {
-            'name': result[ 'name' ],
-            'email': result[ 'email' ],
-            'yearOfBirth': result[  'yearOfBirth' ] 
-        }
+        # construct item dictionary
 
-        if 'address' in result:
-            item[ 'address' ] = result[ 'address' ]
+        item = {}
 
-        if 'courses' in result:
-            item[ 'courses' ] = result[ 'courses' ]
+        for key in result.keys():
+
+            # skip '_id' key
+            if key == '_id':
+                continue
+
+            item[ key ] = result[ key ]
 
         students_thirties.append( item )
 
@@ -263,7 +266,7 @@ def get_students_oldies():
     try:
         # retrieve the request authorization header
         user_uuid = request.headers[ 'Authorization' ]
-    except Exception as e:
+    except Exception:
         # if an exception occurs while retreiving authorization return with an error response
         return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
 
@@ -283,17 +286,17 @@ def get_students_oldies():
 
     for result in search_results:
 
-        item = {
-            'name': result[ 'name' ],
-            'email': result[ 'email' ],
-            'yearOfBirth': result[  'yearOfBirth' ] 
-        }
+        # construct item dictionary
 
-        if 'address' in result:
-            item[ 'address' ] = result[ 'address' ]
+        item = {}
 
-        if 'courses' in result:
-            item[ 'courses' ] = result[ 'courses' ]
+        for key in result.keys():
+
+            # skip '_id' key
+            if key == '_id':
+                continue
+
+            item[ key ] = result[ key ]
 
         students_oldies.append( item )
 
@@ -318,7 +321,7 @@ def get_student_address():
     try:
         # retrieve the request authorization header
         user_uuid = request.headers[ 'Authorization' ]
-    except Exception as e:
+    except Exception:
         # if an exception occurs while retreiving authorization return with an error response
         return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
 
@@ -330,9 +333,9 @@ def get_student_address():
     data = None
 
     try:
-        #retrieve the json request data
+        # retrieve the json request data
         data = json.loads( request.data )
-    except Exception as e:
+    except Exception:
         # if an exception occurs while retreiving data return with an error response
         return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
 
@@ -383,7 +386,7 @@ def delete_student():
     try:
         # retrieve the request authorization header
         user_uuid = request.headers[ 'Authorization' ]
-    except Exception as e:
+    except Exception:
         # if an exception occurs while retreiving authorization return with an error response
         return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
 
@@ -395,9 +398,9 @@ def delete_student():
     data = None
 
     try:
-        #retrieve the json request data
+        # retrieve the json request data
         data = json.loads( request.data )
-    except Exception as e:
+    except Exception:
         # if an exception occurs while retreiving data return with an error response
         return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
 
@@ -431,7 +434,7 @@ def add_courses():
     try:
         # retrieve the request authorization header
         user_uuid = request.headers[ 'Authorization' ]
-    except Exception as e:
+    except Exception:
         # if an exception occurs while retreiving authorization return with an error response
         return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
 
@@ -443,9 +446,9 @@ def add_courses():
     data = None
 
     try:
-        #retrieve the json request data
+        # retrieve the json request data
         data = json.loads( request.data )
-    except Exception as e:
+    except Exception:
         # if an exception occurs while retreiving data return with an error response
         return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
 
@@ -467,7 +470,7 @@ def add_courses():
             return Response( 'courses should only contain one-key integer-value dictionaries.', status = 500, mimetype = 'application/json' )
 
     # add the courses list to the student matching the given email
-    if  students.update_one( { 'email': data[ 'email' ] }, { '$set': { 'courses': data[ 'courses' ] } } ).matched_count == 0:
+    if students.update_one( { 'email': data[ 'email' ] }, { '$set': { 'courses': data[ 'courses' ] } } ).matched_count == 0:
         # if no student matched return with an error response
         return Response( 'Student not found.', status = 400, mimetype = 'application/json')
 
@@ -491,7 +494,7 @@ def get_passed_courses():
     try:
         # retrieve the request authorization header
         user_uuid = request.headers[ 'Authorization' ]
-    except Exception as e:
+    except Exception:
         # if an exception occurs while retreiving authorization return with an error response
         return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
 
@@ -505,9 +508,9 @@ def get_passed_courses():
     data = None
 
     try:
-        #retrieve the json request data
+        # retrieve the json request data
         data = json.loads( request.data )
-    except Exception as e:
+    except Exception:
         # if an exception occurs while retreiving data return with an error response
         return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
 
