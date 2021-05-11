@@ -1,40 +1,40 @@
-# Import necessary modules
+# Import necessary modules.
 
 from pymongo import MongoClient
 
 from flask import Flask, jsonify, request, Response
 
-import uuid # for generating a user_uuid
-import time # used in session generation
+import uuid  # For generating a user_uuid.
+import time  # Used in session generation.
 import json
 
-# for retreiving current year
+# For retreiving current year.
 from datetime import datetime
 
 
 
 # Database interaction settings
 
-# Connect to local mongodb
+# Connect to local mongodb.
 client = MongoClient( 'mongodb://localhost:27017/' )
 
-# Select the InfoSys database
+# Select the InfoSys database.
 db = client[ 'InfoSys' ]
 
-# Select the Students collection
+# Select the Students collection.
 students = db[ 'Students' ]
 
-# Select the Users collection
+# Select the Users collection.
 users = db[ 'Users' ]
 
 
 
-# Define dictionary and functions
+# Define dictionary and functions ...
 
-# Initialize sessions-dictionary
+# Initialize sessions-dictionary.
 users_sessions = {}
 
-# Creates a new user-session
+# Creates a new user-session.
 def create_session( username ):
 
     # generate a new user-uuid
@@ -45,13 +45,13 @@ def create_session( username ):
 
     return user_uuid
 
-# Checks if user-session is valid
+# Checks if user-session is valid.
 def is_session_valid( user_uuid ):
     return user_uuid in users_sessions
 
 
 
-# Initialize the flask application
+# Initialize the flask application.
 app = Flask( __name__ )
 
 
@@ -68,33 +68,48 @@ app = Flask( __name__ )
 @app.route( '/createUser', methods = [ 'POST' ] )
 def create_user():
 
-    # initialize request data object
-    data = None
+    data = None  # Initialize data.
 
     try:
-        # retrieve the json request data
+        # Retrieve the json request data.
         data = json.loads( request.data )
     except Exception:
-        # if an exception occurs while retreiving data return with an error response
-        return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Bad json data.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if data == None:
-        # if the retrieved json request data are empty return with an error response 
-        return Response( 'Bad request.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Bad request.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if 'username' not in data or 'password' not in data:
-        # if username or password is not in tha json request data return with an error response
-        return Response( 'Incomplete information.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Incomplete information.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if users.find( { 'username': data[ 'username' ] } ).count() != 0:
-        # if a user with the username given in the data already exists then return with an error response
-        return Response( 'A user with the given username already exists.', status = 400, mimetype = 'application/json' )
+        # If a user with the username exists,
+        # then return with an error response.
+        return Response(
+                'A user with the given username already exists.',
+                status = 400,
+                mimetype = 'application/json' )
 
-    # insert the new user to the Users collection
-    users.insert_one( { 'username': data[ 'username' ], 'password': data[ 'password' ] } )
+    # Insert new user to the users collection.
+    users.insert_one( {
+                'username': data[ 'username' ],
+                'password': data[ 'password' ]
+            } )
 
-    # return with a success response
-    return Response( 'The user ' + data[ 'username' ] + ' was added to the database.', status = 200, mimetype = 'application/json' )
+    # Return with a success response.
+    return Response(
+            'The user ' + data[ 'username' ] + ' was added to the database.',
+            status = 200,
+            mimetype = 'application/json' )
 
 
 
@@ -106,35 +121,53 @@ def create_user():
 @app.route( '/login', methods = [ 'POST' ] )
 def login():
 
-    # initialize request data object
-    data = None
+    data = None  # Initialize data.
 
     try:
-        # retrieve the json request data
+        # Retrieve the json request data.
         data = json.loads( request.data )
     except Exception:
-        # if an exception occurs while retreiving data return with an error response
-        return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Bad json data.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if data == None:
-        # if the retrieved json request data are empty return with an error response 
-        return Response( 'Bad request.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Bad request.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if 'username' not in data or 'password' not in data:
-        # if username or password is not in tha json request data return with an error response
-        return Response( 'Incomplete information.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Incomplete information.',
+                status = 500,
+                mimetype = 'application/json' )
 
-    if users.find( { 'username': data[ 'username' ], 'password': data[ 'password' ] } ).count() == 0:
-        # if there is no user with the provided username and password return with an error response
-        return Response( 'Wrong username or password.', status = 400, mimetype = 'application/json' )
+    if users.find( {
+                'username': data[ 'username' ],
+                'password': data[ 'password' ]
+            } ).count() == 0:
+        # If username and password do not
+        # correspond to an existing user,
+        # return with an error response.
+        return Response(
+                'Wrong username or password.',
+                status = 400,
+                mimetype = 'application/json' )
 
-    # create a new user-session
+    # Create a new session for the user.
     user_uuid = create_session( data[ 'username' ] )
 
+    # Construct response message using the uuid and username.
     res = { 'uuid': user_uuid, 'username': data[ 'username' ] }
 
-    # return with a success response containing the user-uuid
-    return Response( json.dumps( res ), status = 200, mimetype = 'application/json' )
+    # Return with success response
+    # containing the above message.
+    return Response(
+            json.dumps( res ),
+            status = 200,
+            mimetype = 'application/json' )
 
 
 
@@ -146,56 +179,79 @@ def login():
 @app.route( '/getStudent', methods=[ 'GET' ] )
 def get_student():
 
-    user_uuid = None
+    user_uuid = None  # Initialize uuid.
 
     try:
-        # retrieve the request authorization header
+        # Retrieve the request Authorization header.
         user_uuid = request.headers[ 'Authorization' ]
     except Exception:
-        # if an exception occurs while retreiving authorization return with an error response
-        return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
+        # If an exception occurs while
+        # retreiving the Authorization header,
+        # return with an error response.
+        return Response(
+                'Authorization Key Error',
+                status = 500,
+                mimetype = 'application/json' )
 
     if not is_session_valid( user_uuid ):
-        # if the user is not authorized return with an error response
-        return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+        # If the user is not authorized,
+        # return with an error response.
+        return Response(
+                'Unauthorized.',
+                status = 401,
+                mimetype = 'application/json' )
 
-    # initialize request data object
-    data = None
+    data = None  # Initialize data.
 
     try:
-        # retrieve the json request data
+        # Retrieve the json request data.
         data = json.loads( request.data )
     except Exception:
-        # if an exception occurs while retreiving data return with an error response
-        return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Bad json data.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if data == None:
-        # if the retrieved json request data are empty return with an error response
-        return Response( 'Bad request.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Bad request.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if 'email' not in data:
-        # if email is not in tha json request data return with an error response
-        return Response( 'Incomplete information.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Incomplete information.',
+                status = 500,
+                mimetype = 'application/json' )
 
     found = students.find_one( { 'email': data[ 'email' ] } )
 
     if not found:
-        # if no student with the provided email is found return with an error response
-        return Response( 'Student not found.', status = 400, mimetype = 'application/json' )
-    
-    # construct student dictionary
+        # If no student with the provided email is found,
+        # return with an error response.
+        return Response(
+                'Student not found.',
+                status = 400,
+                mimetype = 'application/json' )
 
-    student = {}
+    # Construct the student dictionary.
+
+    student = {}  # Initialize student.
 
     for key in found.keys():
 
-        # skip '_id' key
+        # Skip '_id' key.
         if key == '_id':
             continue
 
         student[ key ] = found[ key ]
 
-    return Response( json.dumps( student ), status = 200, mimetype = 'application/json' )
+    # Return with a success response
+    # containing the student dictionary.
+    return Response(
+            json.dumps( student ),
+            status = 200,
+            mimetype = 'application/json' )
 
 
 
@@ -206,51 +262,68 @@ def get_student():
 @app.route( '/getStudents/thirties', methods = [ 'GET' ] )
 def get_students_thirties():
 
-    user_uuid = None
+    user_uuid = None  # Initialize uuid.
 
     try:
-        # retrieve the request authorization header
+        # Retrieve the request Authorization header.
         user_uuid = request.headers[ 'Authorization' ]
     except Exception:
-        # if an exception occurs while retreiving authorization return with an error response
-        return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
+        # If an exception occurs while
+        # retreiving the Authorization header,
+        # return with an error response.
+        return Response(
+                'Authorization Key Error',
+                status = 500,
+                mimetype = 'application/json' )
 
     if not is_session_valid( user_uuid ):
-        # if the user is not authorized return with an error response
-        return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+        # If the user is not authorized,
+        # return with an error response.
+        return Response(
+                'Unauthorized.',
+                status = 401,
+                mimetype = 'application/json' )
 
-    # get current year
+    # Get the current year.
     current_year = datetime.today().year
 
-    # search for 30 year-old students in the database
-    search_results = students.find( { 'yearOfBirth': ( current_year - 30 ) } )
+    # Find the students that are 30 years-old.
+    results = students.find( { 'yearOfBirth': ( current_year - 30 ) } )
 
-    # construct the students_thirties list
+    if results.count() == 0:
+        # If no students that are 30 years-old are found,
+        # return with an error response.
+        return Response(
+                'No students that are 30 years-old found.',
+                status = 400,
+                mimetype = 'application/json' )
+
+    # Construct the students list.
 
     students_thirties = []
 
-    for result in search_results:
+    for result in results:
 
-        # construct item dictionary
+        # Construct student dictionary.
 
-        item = {}
+        student = {}
 
         for key in result.keys():
 
-            # skip '_id' key
+            # Skip '_id' key.
             if key == '_id':
                 continue
 
-            item[ key ] = result[ key ]
+            student[ key ] = result[ key ]
 
-        students_thirties.append( item )
+        students_thirties.append( student )
 
-    if not students_thirties:
-        # if no 30 year-old students are found in the database return with an error response
-        return Response( 'No 30 year-old students found.', status = 400, mimetype = 'application/json' )
-
-    # return with a success response containing the students_thirties list
-    return Response( json.dumps( students_thirties ), status = 200, mimetype = 'application/json' )
+    # Return with a success response
+    # containing the students list.
+    return Response(
+            json.dumps( students_thirties ),
+            status = 200,
+            mimetype = 'application/json' )
 
 
 
@@ -261,51 +334,70 @@ def get_students_thirties():
 @app.route( '/getStudents/oldies', methods = [ 'GET' ] )
 def get_students_oldies():
 
-    user_uuid = None
+    user_uuid = None  # Initialize uuid.
 
     try:
-        # retrieve the request authorization header
+        # Retrieve the request Authorization header.
         user_uuid = request.headers[ 'Authorization' ]
     except Exception:
-        # if an exception occurs while retreiving authorization return with an error response
-        return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
+        # If an exception occurs while
+        # retreiving the Authorization header,
+        # return with an error response.
+        return Response(
+                'Authorization Key Error',
+                status = 500,
+                mimetype = 'application/json' )
 
     if not is_session_valid( user_uuid ):
-        # if the user is not authorized return with an error response
-        return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+        # If the user is not authorized,
+        # return with an error response.
+        return Response(
+                'Unauthorized.',
+                status = 401,
+                mimetype = 'application/json' )
 
-    # get current year
+    # Get the current year.
     current_year = datetime.today().year
 
-    # search for students that are at least 30 years-old in the database
-    search_results = students.find( { 'yearOfBirth': { '$lte': ( current_year - 30 ) } } )
+    # Search for the students that are at least 30 years-old.
+    results = students.find( {
+                'yearOfBirth': { '$lte': ( current_year - 30 ) }
+            } )
 
-    # construct the students_oldies list
+    if results.count() == 0:
+        # If no students that are at least 30 years-old are found,
+        # return with an error response
+        return Response(
+                "No students that are at least 30 years-old found.",
+                status = 500,
+                mimetype = "application/json" )
+
+    # Construct the students list.
 
     students_oldies = []
 
-    for result in search_results:
+    for result in results:
 
-        # construct item dictionary
+        # Construct student dictionary.
 
-        item = {}
+        student = {}
 
         for key in result.keys():
 
-            # skip '_id' key
+            # Skip '_id' key.
             if key == '_id':
                 continue
 
-            item[ key ] = result[ key ]
+            student[ key ] = result[ key ]
 
-        students_oldies.append( item )
+        students_oldies.append( student )
 
-    if not students_oldies:
-        # if no students that are at least 30 years-old found in the database return with an error response
-        return Response( 'No students that are at least 30 years old found.', status = 400, mimetype = 'application/json' )
-
-    # return with a success response containing the students_oldies list
-    return Response( json.dumps( students_oldies ), status = 200, mimetype = 'application/json' )
+    # Return with a success response
+    # containing the students list.
+    return Response(
+            json.dumps( students_oldies ),
+            status = 200,
+            mimetype = 'application/json' )
 
 
 
@@ -316,60 +408,90 @@ def get_students_oldies():
 @app.route( '/getStudentAddress', methods=[ 'GET' ] )
 def get_student_address():
 
-    user_uuid = None
+    user_uuid = None  # Initialize uuid.
 
     try:
-        # retrieve the request authorization header
+        # Retrieve the request Authorization header.
         user_uuid = request.headers[ 'Authorization' ]
     except Exception:
-        # if an exception occurs while retreiving authorization return with an error response
-        return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
+        # If an exception occurs while
+        # retreiving the Authorization header,
+        # return with an error response.
+        return Response(
+                'Authorization Key Error',
+                status = 500,
+                mimetype = 'application/json' )
 
     if not is_session_valid( user_uuid ):
-        # if the user is not authorized return with an error response
-        return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+        # If the user is not authorized,
+        # return with an error response.
+        return Response(
+                'Unauthorized.',
+                status = 401,
+                mimetype = 'application/json' )
 
-    # initialize request data object
-    data = None
+    data = None  # Initialize data.
 
     try:
-        # retrieve the json request data
+        # Retrieve the json request data.
         data = json.loads( request.data )
     except Exception:
-        # if an exception occurs while retreiving data return with an error response
-        return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Bad json data.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if data == None:
-        # if the retrieved json request data are empty return with an error response
-        return Response( 'Bad request.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Bad request.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if 'email' not in data:
-        # if email is not in tha json request data return with an error response
-        return Response( 'Incomplete information.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Incomplete information.',
+                status = 500,
+                mimetype = 'application/json' )
 
-    # search database for the student with the provided email
+    # Search database for the student with the provided email.
     found = students.find_one( { 'email': data[ 'email' ] } )
 
     if not found:
-        # if no student with the provided email is found return with an error response
-        return Response( 'Student not found.', status = 400, mimetype = 'application/json' )
-    
-    if 'address' not in found:
-        # if the student found has no address return with an error response
+        # If no student with the provided email is found,
+        # return with an error response.
         return Response(
-            'The student with the email ' + data[ 'email' ] + ' has no address.',
-            status = 400, mimetype = 'application/json' )
+                'Student not found.',
+                status = 400,
+                mimetype = 'application/json' )
 
-    # construct student dictionary
+    if 'address' not in found:
+        # If the student found has no address,
+        # return with an error response.
+        return Response(
+                'The student with the email '
+                        + data[ 'email' ]
+                        + ' has no address.',
+                status = 400,
+                mimetype = 'application/json' )
+
+    # Construct the student dictionary.
 
     street = found[ 'address' ][ 0 ][ 'street' ]
 
     postcode = found[ 'address' ][ 0 ][ 'postcode' ]
 
-    student = { 'name': found[ 'name' ], 'street': street, 'postcode': postcode }
+    student = {
+        'name': found[ 'name' ],
+        'street': street,
+        'postcode': postcode
+    }
 
-    # return with a success response containing the student's address information
-    return Response( json.dumps( student ), status = 200, mimetype = 'application/json' )
+    # Return with a success response,
+    # containing the student's address information.
+    return Response(
+            json.dumps( student ),
+            status = 200,
+            mimetype = 'application/json' )
 
 
 
@@ -377,47 +499,68 @@ def get_student_address():
 #
 # ( Authorization required )
 # Given an email in the json request data delete
-# student with the given email from the database
+# student with the given email from the database.
 @app.route( '/deleteStudent', methods=[ 'DELETE' ] )
 def delete_student():
 
-    user_uuid = None
+    user_uuid = None  # Initialize uuid.
 
     try:
-        # retrieve the request authorization header
+        # Retrieve the request Authorization header.
         user_uuid = request.headers[ 'Authorization' ]
     except Exception:
-        # if an exception occurs while retreiving authorization return with an error response
-        return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
+        # If an exception occurs while
+        # retreiving the Authorization header,
+        # return with an error response.
+        return Response(
+                'Authorization Key Error',
+                status = 500,
+                mimetype = 'application/json' )
 
     if not is_session_valid( user_uuid ):
-        # if the user is not authorized return with an error response
-        return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+        # If the user is not authorized,
+        # return with an error response.
+        return Response(
+                'Unauthorized.',
+                status = 401,
+                mimetype = 'application/json' )
 
-    # initialize request data object
-    data = None
+    data = None  # Initialize data.
 
     try:
-        # retrieve the json request data
+        # Retrieve the json request data.
         data = json.loads( request.data )
     except Exception:
-        # if an exception occurs while retreiving data return with an error response
-        return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Bad json data.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if data == None:
-        # if the retrieved json request data are empty return with an error response
-        return Response( 'Bad request.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Bad request.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if 'email' not in data:
-        # if email is not in tha json request data return with an error response
-        return Response( 'Incomplete information.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Incomplete information.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if students.delete_one( { 'email': data['email'] } ).deleted_count == 0:
-        # if the student with the given email wasn't deleted return with an error response
-        return Response( 'Student not found.', status = 400, mimetype = 'application/json' )
+        # If the student with the given email is not deleted,
+        # return with an error response.
+        return Response(
+                'Student not found.',
+                status = 400,
+                mimetype = 'application/json' )
 
-    # return with a success response
-    return Response( 'Student deleted successfully.', status = 200, mimetype = 'application/json' )
+    # Return with a success response.
+    return Response(
+            'Student deleted successfully.',
+            status = 200,
+            mimetype = 'application/json' )
 
 
 
@@ -425,57 +568,92 @@ def delete_student():
 #
 # ( Authorization required )
 # Add a list of courses to a student with
-# the email provided in json request data
+# the email provided in json request data.
 @app.route( '/addCourses', methods = [ 'PATCH' ] )
 def add_courses():
 
-    user_uuid = None
+    user_uuid = None  # Initialize uuid.
 
     try:
-        # retrieve the request authorization header
+        # Retrieve the request Authorization header.
         user_uuid = request.headers[ 'Authorization' ]
     except Exception:
-        # if an exception occurs while retreiving authorization return with an error response
-        return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
+        # If an exception occurs while
+        # retreiving the Authorization header,
+        # return with an error response.
+        return Response(
+                'Authorization Key Error',
+                status = 500,
+                mimetype = 'application/json' )
 
     if not is_session_valid( user_uuid ):
-        # if the user is not authorized return with an error response
-        return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+        # If the user is not authorized,
+        # return with an error response
+        return Response(
+                'Unauthorized.',
+                status = 401,
+                mimetype = 'application/json' )
 
-    # initialize request data object
-    data = None
+    data = None  # Initialize data.
 
     try:
-        # retrieve the json request data
+        # Retrieve the json request data.
         data = json.loads( request.data )
     except Exception:
-        # if an exception occurs while retreiving data return with an error response
-        return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Bad json data.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if data == None:
-        # if the retrieved json request data are empty return with an error response
-        return Response( 'Bad request.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Bad request.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if 'email' not in data or 'courses' not in data:
-        # if email or courses is not in tha json request data return with an error response
-        return Response( 'Incomplete information.', status = 500, mimetype = 'application/json' )
-    
+        return Response(
+                'Incomplete information.',
+                status = 500,
+                mimetype = 'application/json' )
+
     if not isinstance( data[ 'courses' ], list ):
-        # if courses is not a list return with an error response
-        return Response( 'courses should be a list.', status = 500, mimetype = 'application/json' )
+        # If courses is not a list,
+        # return with an error response.
+        return Response(
+                'courses should be a list.',
+                status = 500,
+                mimetype = 'application/json' )
 
     for item in data[ 'courses' ]:
-        if not isinstance( item, dict ) or len( item ) != 1 or not isinstance( list( item.values() )[ 0 ], int ):
-            # if any item in the courses list is not a one-key dictionary with an integer value then return with an error response
-            return Response( 'courses should only contain one-key integer-value dictionaries.', status = 500, mimetype = 'application/json' )
+        if ( not isinstance( item, dict ) or
+                len( item ) != 1 or
+                    not isinstance( list( item.values() )[ 0 ], int ) ):
+            # If any item in the courses list
+            # is not a one-key dictionary with an integer value,
+            # then return with an error response
+            return Response(
+                    'courses should only contain '
+                            + 'one-key integer-value dictionaries.',
+                    status = 500,
+                    mimetype = 'application/json' )
 
-    # add the courses list to the student matching the given email
-    if students.update_one( { 'email': data[ 'email' ] }, { '$set': { 'courses': data[ 'courses' ] } } ).matched_count == 0:
-        # if no student matched return with an error response
-        return Response( 'Student not found.', status = 400, mimetype = 'application/json')
+    # Add the courses list to the student matching the given email.
+    if students.update_one(
+            { 'email': data[ 'email' ] },
+            { '$set': { 'courses': data[ 'courses' ] } } ).matched_count == 0:
+        # If no student matched the provided email,
+        # return with an error response.
+        return Response(
+                'Student not found.',
+                status = 400,
+                mimetype = 'application/json' )
 
-    # return with a success response
-    return Response( 'Student updated successfully.', status = 200, mimetype = 'application/json')
+    # Return with a success response.
+    return Response(
+            'Student updated successfully.',
+            status = 200,
+            mimetype = 'application/json' )
 
 
 
@@ -483,7 +661,7 @@ def add_courses():
 #
 # ( Authorization required )
 # Return a list of passed courses of
-# the student with the provided email
+# the student with the provided email.
 @app.route( '/getPassedCourses', methods = [ 'GET' ] )
 def get_passed_courses():
 
@@ -495,70 +673,100 @@ def get_passed_courses():
         # retrieve the request authorization header
         user_uuid = request.headers[ 'Authorization' ]
     except Exception:
-        # if an exception occurs while retreiving authorization return with an error response
-        return Response( 'Authorization Key Error', status = 500, mimetype = 'application/json' )
+        # If an exception occurs while
+        # retreiving the Authorization header,
+        # return with an error response.
+        return Response(
+                'Authorization Key Error',
+                status = 500,
+                mimetype = 'application/json' )
 
     if not is_session_valid( user_uuid ):
-        # if the user is not authorized return with an error response
-        return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+        # If the user is not authorized,
+        # return with an error response.
+        return Response(
+                'Unauthorized.',
+                status = 401,
+                mimetype = 'application/json' )
 
     # Data validation ...
 
-    # initialize request data object
-    data = None
+    data = None  # Initialize data
 
     try:
         # retrieve the json request data
         data = json.loads( request.data )
     except Exception:
-        # if an exception occurs while retreiving data return with an error response
-        return Response( 'Bad json data.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Bad json data.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if data == None:
-        # if the retrieved json request data are empty return with an error response
-        return Response( 'Bad request.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Bad request.',
+                status = 500,
+                mimetype = 'application/json' )
 
     if 'email' not in data:
-        # if email or courses is not in tha json request data return with an error response
-        return Response( 'Incomplete information.', status = 500, mimetype = 'application/json' )
+        return Response(
+                'Incomplete information.',
+                status = 500,
+                mimetype = 'application/json' )
 
     # Student search ...
 
-    # search database for the student with the provided email
+    # Search database for the student with the provided email.
     found = students.find_one( { 'email': data[ 'email' ] } )
 
     if not found:
-        # if no student with the provided email is found return with an error response
-        return Response( 'Student not found.', status = 400, mimetype = 'application/json' )
-    
+        # If no student with the provided email is found,
+        # return with an error response.
+        return Response(
+                'Student not found.',
+                status = 400,
+                mimetype = 'application/json' )
+
     # Courses check ...
 
     if 'courses' not in found:
-        # if the student found has no courses return with an error response
+        # If the student found has no courses,
+        # return with an error response.
         return Response(
-            'The student with the email ' + data[ 'email' ] + ' has no courses.',
-            status = 400, mimetype = 'application/json' )
+                'The student with the email '
+                        + data[ 'email' ]
+                        + ' has no courses.',
+                status = 400,
+                mimetype = 'application/json' )
 
     # Filter passed courses ...
 
     passed_courses = []
 
-    for item in found[ 'courses' ]:
-        if 5 <= list( item.values() )[ 0 ]:
-            passed_courses.append( item )
-    
+    for course in found[ 'courses' ]:
+        if 5 <= list( course.values() )[ 0 ]:
+            passed_courses.append( course )
+
     if len( passed_courses ) == 0:
-        # if the student has no passed courses return with an error response
+        # If the student has no passed courses,
+        # return with an error response.
         return Response(
-            'The student with the email ' + data[ 'email' ] + ' has no passed courses.',
-            status = 400, mimetype = 'application/json' )
+                'The student with the email '
+                        + data[ 'email' ]
+                        + ' has no passed courses.',
+                status = 400,
+                mimetype = 'application/json' )
 
     # Construct output ...
 
     student = { 'name': found[ 'name' ], 'passed courses': passed_courses }
 
-    # Response ...
-    return Response( json.dumps( student ), status = 200, mimetype = 'application/json' )
+    # Return with a success response
+    # containing the student and passed courses.
+    return Response(
+            json.dumps( student ),
+            status = 200,
+            mimetype = 'application/json' )
 
 
 
