@@ -8,7 +8,7 @@ import uuid  # For generating a user_uuid.
 import time  # Used in session generation.
 import json
 
-# For retreiving current year.
+# For retrieving current year.
 from datetime import datetime
 
 
@@ -37,15 +37,15 @@ users_sessions = {}
 # Creates a new user-session.
 def create_session( username ):
 
-    # generate a new user-uuid
+    # Generate a new user_uuid.
     user_uuid = str( uuid.uuid1() )
 
-    # insert new user-session to the sessions-dictionary
+    # Insert new session to the users_sessions dictionary.
     users_sessions[ user_uuid ] = ( username, time.time() )
 
     return user_uuid
 
-# Checks if user-session is valid.
+# Checks if user session is valid.
 def is_session_valid( user_uuid ):
     return user_uuid in users_sessions
 
@@ -67,6 +67,8 @@ app = Flask( __name__ )
 # username and password in Users.
 @app.route( '/createUser', methods = [ 'POST' ] )
 def create_user():
+
+    # Data validation ...
 
     data = None  # Initialize data.
 
@@ -90,6 +92,8 @@ def create_user():
                 'Incomplete information.',
                 status = 500,
                 mimetype = 'application/json' )
+
+    # Student search ...
 
     if users.find( { 'username': data[ 'username' ] } ).count() != 0:
         # If a user with the username exists,
@@ -121,6 +125,8 @@ def create_user():
 @app.route( '/login', methods = [ 'POST' ] )
 def login():
 
+    # Data validation ...
+
     data = None  # Initialize data.
 
     try:
@@ -143,6 +149,8 @@ def login():
                 'Incomplete information.',
                 status = 500,
                 mimetype = 'application/json' )
+
+    # User authorization ...
 
     if users.find( {
                 'username': data[ 'username' ],
@@ -175,9 +183,11 @@ def login():
 #
 # ( Authorization required )
 # Given an email in the json request data
-# get student with the email from Students
+# get student with the email from Students.
 @app.route( '/getStudent', methods=[ 'GET' ] )
 def get_student():
+
+    # Authorization validation ...
 
     user_uuid = None  # Initialize uuid.
 
@@ -186,7 +196,7 @@ def get_student():
         user_uuid = request.headers[ 'Authorization' ]
     except Exception:
         # If an exception occurs while
-        # retreiving the Authorization header,
+        # retrieving the Authorization header,
         # return with an error response.
         return Response(
                 'Authorization Key Error',
@@ -200,6 +210,8 @@ def get_student():
                 'Unauthorized.',
                 status = 401,
                 mimetype = 'application/json' )
+
+    # Data validation ...
 
     data = None  # Initialize data.
 
@@ -223,6 +235,8 @@ def get_student():
                 'Incomplete information.',
                 status = 500,
                 mimetype = 'application/json' )
+
+    # Student search ...
 
     found = students.find_one( { 'email': data[ 'email' ] } )
 
@@ -262,6 +276,8 @@ def get_student():
 @app.route( '/getStudents/thirties', methods = [ 'GET' ] )
 def get_students_thirties():
 
+    # Authorization validation ...
+
     user_uuid = None  # Initialize uuid.
 
     try:
@@ -269,7 +285,7 @@ def get_students_thirties():
         user_uuid = request.headers[ 'Authorization' ]
     except Exception:
         # If an exception occurs while
-        # retreiving the Authorization header,
+        # retrieving the Authorization header,
         # return with an error response.
         return Response(
                 'Authorization Key Error',
@@ -283,6 +299,8 @@ def get_students_thirties():
                 'Unauthorized.',
                 status = 401,
                 mimetype = 'application/json' )
+
+    # Student search ...
 
     # Get the current year.
     current_year = datetime.today().year
@@ -334,6 +352,8 @@ def get_students_thirties():
 @app.route( '/getStudents/oldies', methods = [ 'GET' ] )
 def get_students_oldies():
 
+    # Authorization validation ...
+
     user_uuid = None  # Initialize uuid.
 
     try:
@@ -341,7 +361,7 @@ def get_students_oldies():
         user_uuid = request.headers[ 'Authorization' ]
     except Exception:
         # If an exception occurs while
-        # retreiving the Authorization header,
+        # retrieving the Authorization header,
         # return with an error response.
         return Response(
                 'Authorization Key Error',
@@ -355,6 +375,8 @@ def get_students_oldies():
                 'Unauthorized.',
                 status = 401,
                 mimetype = 'application/json' )
+
+    # Student search ...
 
     # Get the current year.
     current_year = datetime.today().year
@@ -408,6 +430,8 @@ def get_students_oldies():
 @app.route( '/getStudentAddress', methods=[ 'GET' ] )
 def get_student_address():
 
+    # Authorization validation ...
+
     user_uuid = None  # Initialize uuid.
 
     try:
@@ -415,7 +439,7 @@ def get_student_address():
         user_uuid = request.headers[ 'Authorization' ]
     except Exception:
         # If an exception occurs while
-        # retreiving the Authorization header,
+        # retrieving the Authorization header,
         # return with an error response.
         return Response(
                 'Authorization Key Error',
@@ -429,6 +453,8 @@ def get_student_address():
                 'Unauthorized.',
                 status = 401,
                 mimetype = 'application/json' )
+
+    # Data validation ...
 
     data = None  # Initialize data.
 
@@ -452,6 +478,8 @@ def get_student_address():
                 'Incomplete information.',
                 status = 500,
                 mimetype = 'application/json' )
+
+    # Student search ...
 
     # Search database for the student with the provided email.
     found = students.find_one( { 'email': data[ 'email' ] } )
@@ -503,6 +531,8 @@ def get_student_address():
 @app.route( '/deleteStudent', methods=[ 'DELETE' ] )
 def delete_student():
 
+    # Authorization validation ...
+
     user_uuid = None  # Initialize uuid.
 
     try:
@@ -510,7 +540,7 @@ def delete_student():
         user_uuid = request.headers[ 'Authorization' ]
     except Exception:
         # If an exception occurs while
-        # retreiving the Authorization header,
+        # retrieving the Authorization header,
         # return with an error response.
         return Response(
                 'Authorization Key Error',
@@ -524,6 +554,8 @@ def delete_student():
                 'Unauthorized.',
                 status = 401,
                 mimetype = 'application/json' )
+
+    # Data validation ...
 
     data = None  # Initialize data.
 
@@ -547,6 +579,8 @@ def delete_student():
                 'Incomplete information.',
                 status = 500,
                 mimetype = 'application/json' )
+
+    # Student deletion ...
 
     if students.delete_one( { 'email': data['email'] } ).deleted_count == 0:
         # If the student with the given email is not deleted,
@@ -572,6 +606,8 @@ def delete_student():
 @app.route( '/addCourses', methods = [ 'PATCH' ] )
 def add_courses():
 
+    # Authorization validation ...
+
     user_uuid = None  # Initialize uuid.
 
     try:
@@ -579,7 +615,7 @@ def add_courses():
         user_uuid = request.headers[ 'Authorization' ]
     except Exception:
         # If an exception occurs while
-        # retreiving the Authorization header,
+        # retrieving the Authorization header,
         # return with an error response.
         return Response(
                 'Authorization Key Error',
@@ -593,6 +629,8 @@ def add_courses():
                 'Unauthorized.',
                 status = 401,
                 mimetype = 'application/json' )
+
+    # Data validation ...
 
     data = None  # Initialize data.
 
@@ -617,6 +655,8 @@ def add_courses():
                 status = 500,
                 mimetype = 'application/json' )
 
+    # Courses addition ...
+
     if not isinstance( data[ 'courses' ], list ):
         # If courses is not a list,
         # return with an error response.
@@ -628,7 +668,7 @@ def add_courses():
     for item in data[ 'courses' ]:
         if ( not isinstance( item, dict ) or
                 len( item ) != 1 or
-                    not isinstance( list( item.values() )[ 0 ], int ) ):
+                        not isinstance( list( item.values() )[ 0 ], int ) ):
             # If any item in the courses list
             # is not a one-key dictionary with an integer value,
             # then return with an error response
@@ -674,7 +714,7 @@ def get_passed_courses():
         user_uuid = request.headers[ 'Authorization' ]
     except Exception:
         # If an exception occurs while
-        # retreiving the Authorization header,
+        # retrieving the Authorization header,
         # return with an error response.
         return Response(
                 'Authorization Key Error',
