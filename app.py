@@ -13,7 +13,7 @@ from datetime import datetime
 
 
 
-# Database interaction settings
+# Database interaction settings ...
 
 # Connect to local mongodb.
 client = MongoClient( 'mongodb://localhost:27017/' )

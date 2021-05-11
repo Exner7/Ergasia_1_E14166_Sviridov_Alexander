@@ -44,11 +44,9 @@ along with a rudimentary login authentication and session authorization system.
         * The *students.json* file can be used to populate the Students collection
 
             * Copy the *students.json* file into the mongodb docker container as:
-
             `$ (sudo) docker cp students.json mongodb:/students.json`
 
             * Import *students.json* into the **Students** collection in the **InfoSys** database using this command.
-
             `$ (sudo) docker exec -it mongodb mongoimport --db=InfoSys --collection=Students --file=students.json`
 
             (*this command will create the InfoSys database and the Students collection if they aren't yet present.*)
@@ -96,17 +94,17 @@ along with a rudimentary login authentication and session authorization system.
     The **initial** `app.py` script (provided by the professors)
     can be described abstractly by the following steps:
 
-    1. *Import all of the necessary modules for the whole project*
-    2. *Connect to the local mongodb and access the database InfoSys*
-    3.  *Select the Students and Users collections*
-    4.  *Initialize the flask application*
-    5.  *Define the `users_sessions` dictionary*
-    6.  *Define helper functions `create_session(username)` and `is_session_valid(user_uuid)`*
+    1. *Import all of the necessary modules for the whole project.*
+    2. *Connect to the local mongodb and access the database InfoSys.*
+    3.  *Select the Students and Users collections.*
+    4.  *Initialize the flask application.*
+    5.  *Define the `users_sessions` dictionary.*
+    6.  *Define helper functions `create_session(username)` and `is_session_valid(user_uuid)`.*
     7.  *Define routes and function templates for all the required API-Endpoints and for each one:*
         * *implement the data fetching logic*
         * *include comments describing required functionality and desired status codes*
         * *return response on success*
-    8.  *Start the flask application*
+    8.  *Start the flask application.*
 
     There are three important objects to understand in the setup part of the project:
     
