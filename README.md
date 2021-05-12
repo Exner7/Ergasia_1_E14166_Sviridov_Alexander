@@ -27,7 +27,7 @@ along with a rudimentary login authentication and session authorization system.
     For this project to work correctly, the mongodb docker container will
     have to be named **mongodb** and listen to **localhost's port 27017**,
     thus a mapping between the container's 27017 port (default for MongoDB)
-    to the port 27017 port on the localhost.
+    and the port 27017 port of the localhost.
 
     * `name:` mongodb
     * `port:` `localhost:27017 <--> mongodb:27017`
@@ -130,7 +130,7 @@ along with a rudimentary login authentication and session authorization system.
         }
         ```
 
-        It is kept updated by `create_session(username)` during a login and
+        It is kept updated by `create_session(username)` during logings and
         is used by `is_session_valid(user_uuid)` for session authorization.
 
     * The `create_session(username)` function:
@@ -165,8 +165,8 @@ the students collection must be populated with the students.json file.
 The requirement for the project is the implementation of **9 *API Endpoints***
 for the Flask application within the `app.py` script.
 
-As already mentioned in the **Setup**, *the data fetching logic* is already implemented,
-so these parts of the endpoints are not described.
+As already mentioned in the **Setup**, *the data fetching and validation logic* 
+is already implemented, so these parts of the endpoints are not described here.
 
 #### The API Endpoints
 
@@ -183,6 +183,7 @@ so these parts of the endpoints are not described.
         "password": "sherl0cked"
     }
     ```
+
     The endpoint's method `create_user()` requests the json,
     handles the cases for exceptions, improper json content
     and incomplete json information, returning with the
@@ -227,7 +228,7 @@ so these parts of the endpoints are not described.
 
             `$ (sudo) docker exec -it mongodb mongo`
 
-            Using database database **InfoSys** find all Users (should be empty):
+            Using database **InfoSys** find all Users (should be empty):
             
             ![](images/testing1a.png)
 
@@ -243,10 +244,11 @@ so these parts of the endpoints are not described.
                     "password": "sherl0cked"
                 }
                 ```
+
             * Push the **Send** button.
 
             As shown in the screenshot below, the request
-            got a success responses with `status = 200`:
+            got a success response with `status = 200`:
             
             ![](images/testing1b.png)
 
@@ -255,8 +257,10 @@ so these parts of the endpoints are not described.
         
             ![](images/testing1c.png)
 
-        4.  If the exact same request is made since a user with the username given
-            in the data already exists an error response is returned `status = 400`:
+        4.  If a request to create a new user is made with the same
+            username then since a user with this username already
+            exists withing the User collections, an error response
+            is returned with a `status = 400`:
 
             ![](images/testing1d.png)
 
@@ -320,19 +324,20 @@ so these parts of the endpoints are not described.
         1.  Use **Postman** to make the request.
         
             * Set the request method to **`POST`**.
-            * Type **`localhost:5000/createUser`** in the **URL field**.
+            * Type **`localhost:5000/login`** in the **URL field**.
             * Write the request data as **`raw`** **`json`** in the request **body** as
             
                 ```js
                 {
                     "username": "sherlock",
-                    "password": "morimorimorimoriarty" // wrong password
+                    "password": "morimorimoriarty" // wrong password
                 }
                 ```
+
             * Push the **Send** button.
 
             As shown in the screenshot below, the request
-            got an error responses with `status = 400`
+            got an error response with `status = 400`
             since the password did not match:
             
             ![](images/testing2a.png)
@@ -340,7 +345,7 @@ so these parts of the endpoints are not described.
         2.  Use **Postman** to make the request.
         
             * Set the request method to **`POST`**.
-            * Type **`localhost:5000/createUser`** in the **URL field**.
+            * Type **`localhost:5000/login`** in the **URL field**.
             * Write the request data as **`raw`** **`json`** in the request **body** as
             
                 ```js
@@ -352,7 +357,7 @@ so these parts of the endpoints are not described.
             * Push the **Send** button.
 
             As shown in the screenshot below, the request
-            a success responses with `status = 200`
+            a success response with `status = 200`
             and in the response body we get a **uuid** along
             with the username which is used for authorization:
         
@@ -460,22 +465,22 @@ so these parts of the endpoints are not described.
             *   Push the **Send** button.
 
             As shown in the screenshot below, the request
-            got an error responses with `status = 401` Unauthorized
+            got an error response with `status = 401` *Unauthorized*
             since the uuid is invalid:
 
             ![](images/testing3b.png)
             
 
-        2. Use **Postman** to make the request.
+        2.  Use **Postman** to make the request.
 
-            *   Set `Authorization` header to the `uuid`
-                provided in the previous login response:
+            *   Set `Authorization` header to the **`uuid`**
+                provided in the previous **login response**:
 
                 ![](images/testing3c.png)
 
             *   Write the request data as **`raw`** **`json`** in the request **body** as
             
-                ```js
+                ```json
                 {
                     "email": "frenchdale@ontagene68.com" // email not in database
                 }
@@ -488,16 +493,16 @@ so these parts of the endpoints are not described.
 
             ![](images/testing3d.png)
          
-         3. Use **Postman** to make the request.
+        3.  Use **Postman** to make the request.
 
             *   Set `Authorization` header to the `uuid`
                 provided in the previous login response:
 
-                ![](images/testing3c.png)
+                ![](images/testing3e.png)
 
             *   Write the request data as **`raw`** **`json`** in the request **body** as
             
-                ```js
+                ```json
                 {
                     "email": "frenchdale@ontagene.com" // email is in database
                 }
@@ -510,7 +515,7 @@ so these parts of the endpoints are not described.
             a student with the provided email exists in the database. In
             the response the json information for the student is present.
 
-            ![](images/testing3e.png)
+            ![](images/testing3f.png)
 
 ---
 
@@ -604,7 +609,7 @@ so these parts of the endpoints are not described.
             *   Push the **Send** button.
 
             As shown in the screenshot below, the request got
-            an error responses with `status = 401` Unauthorized
+            an error response with `status = 401` *Unauthorized*
             since the uuid is invalid:
 
             ![](images/testing4a.png)
@@ -718,7 +723,7 @@ so these parts of the endpoints are not described.
             *   Push the **Send** button.
 
             As shown in the screenshot below, the request got
-            an error responses with `status = 401` Unauthorized
+            an error response with `status = 401` *Unauthorized*
             since the uuid is invalid:
 
             ![](images/testing5a.png)
@@ -820,86 +825,86 @@ so these parts of the endpoints are not described.
                     mimetype = 'application/json' )
             ```
 
-        * ##### Testing
+    * ##### Testing
 
-            1.  Use **Postman** to make the request.
+        1.  Use **Postman** to make the request.
+        
+            * Set the request method to **`GET`**.
+            * Type **`localhost:5000/getStudentAddress`** in the **URL field**.
             
-                * Set the request method to **`GET`**.
-                * Type **`localhost:5000/getStudentAddress`** in the **URL field**.
-                
-                *   Set **`Authorization`** header at random to test authorization check.
+            *   Set **`Authorization`** header at random to test authorization check.
 
-                    ![](images/testing6a.png)
+                ![](images/testing6a.png)
 
-                *   Write the request data as **`raw`** **`json`** in the request **body** as
+            *   Write the request data as **`raw`** **`json`** in the request **body** as
+        
+                ```js
+                {
+                    "email": "frenchdale@ontagene68.com" // email not in database
+                }
+                ```
+
+            *   Push the **Send** button.
+
+            As shown in the screenshot below, the request got
+            an error response with `status = 401` *Unauthorized*
+            since the uuid is invalid:
+
+            ![](images/testing6b.png)
+
+        2.  Using **Postman** make the request:
             
-                    ```js
-                    {
-                        "email": "frenchdale@ontagene68.com" // email not in database
-                    }
-                    ```
+            * Set **`Authorization`** header to the login's response uuid.
 
-                *   Push the **Send** button.
+            * Leave the request's body json data as it is.
 
-                As shown in the screenshot below, the request got
-                an error responses with `status = 401` Unauthorized
-                since the uuid is invalid:
+            * Push the **Send** button.
 
-                ![](images/testing6b.png)
+            As shown in the screenshot below,
+            the request was authorized,
+            but since the email does not correspond to any student in the database
+            the response has a `status = 400`:
 
-            2.  Using **Postman** make the request:
-                
-                * Set **`Authorization`** header to the login's response uuid.
+            ![](images/testing6c.png)
+        
+        3.  In **Postman** make the request:
 
-                * Leave the same email in body's raw json data
+            *   Set the request's body json data to an existing email:
 
-                * Push the **Send** button.
+                ```js
+                {
+                    "email": "frenchdale@ontagene.com" // email in database
+                }
+                ```
 
-                As shown in the screenshot below,
-                the request was authorized,
-                but since the email does not correspond to any student in the database
-                the response has a `status = 400`:
+            *   Everything else should remain unchanged.
 
-                ![](images/testing6c.png)
-            
-            3.  In **Postman** make the request:
+            *   Press **Send**.
 
-                *   Set the request's body json data to an existing email:
+            As shown in the screenshot, the student was found
+            but had no address, thus the response has `status = 400`
 
-                    ```js
-                    {
-                        "email": "frenchdale@ontagene.com" // email in database
-                    }
-                    ```
+            ![](images/testing6d.png)
+        
+        4.  In **Postman** make the request:
 
-                *   Everything else should remain unchanged.
+            *   Set the request's body json data to an existing email:
 
-                *   Press **Send**.
+                ```js
+                {
+                    "email": "irenepearson@ontagene.com" // has address
+                }
+                ```
 
-                As shown in the screenshot, the student was found
-                but had no address, thus the response has `status = 400`
+            *   Everything else should remain unchanged.
 
-                ![](images/testing6d.png)
-            
-            4.  In **Postman** make the request:
+            *   Press **Send**.
 
-                *   Set the request's body json data to an existing email:
+            As shown in the screenshot, the student was found and
+            had an address, thus the response has `status = 200`
+            and it contains the student address information
 
-                    ```js
-                    {
-                        "email": "irenepearson@ontagene.com" // has address
-                    }
-                    ```
-
-                *   Everything else should remain unchanged.
-
-                *   Press **Send**.
-
-                As shown in the screenshot, the student was found and
-                had an address, thus the response has `status = 200`
-                and it contains the student address information
-
-                ![](images/testing6e.png)
+            ![](images/testing6e.png)
 
 ---
 
@@ -996,7 +1001,7 @@ so these parts of the endpoints are not described.
             *   Push the **Send** button.
 
             As shown in the screenshot below, the request got
-            an error responses with `status = 401` Unauthorized
+            an error responses with `status = 401` *Unauthorized*
             since the uuid is invalid:
 
             ![](images/testing7b.png)
@@ -1026,7 +1031,7 @@ so these parts of the endpoints are not described.
                 }
                 ```
 
-                This email corresponds to an existing student in the databse
+                This email corresponds to an existing student in the database
                 
                 ![](images/testing7d.png)
 
@@ -1039,8 +1044,8 @@ so these parts of the endpoints are not described.
 
             ![](images/testing7e.png)
 
-            Indeed if we search for the student in mongo shell
-            he is no longer present.
+            Indeed, if we search for the student in mongo shell,
+            the student is no longer present.
 
             ![](images/testing7f.png)
 
@@ -1178,7 +1183,7 @@ so these parts of the endpoints are not described.
             *   Push the **Send** button.
 
             As shown in the screenshot below, the request got
-            an error responses with `status = 401` Unauthorized
+            an error responses with `status = 401` *Unauthorized*
             since the uuid is invalid:
 
             ![](images/testing8b.png)
@@ -1394,7 +1399,7 @@ so these parts of the endpoints are not described.
             *   Push the **Send** button.
 
             As shown in the screenshot below, the request got
-            an error responses with `status = 401` Unauthorized
+            an error responses with `status = 401` *Unauthorized*
             since the uuid is invalid:
 
             ![](images/testing9b.png)
@@ -1409,7 +1414,7 @@ so these parts of the endpoints are not described.
 
             As shown in the screenshot below, the request was authorized.
             But since the email doesn't correspond to a student in the database,
-            the response returns with an error (`status = 400`)
+            an error response returns with `status = 400`
 
             ![](images/testing9c.png)
 
