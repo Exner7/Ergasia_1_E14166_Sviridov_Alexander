@@ -480,7 +480,7 @@ is already implemented, so these parts of the endpoints are not described here.
 
             *   Write the request data as **`raw`** **`json`** in the request **body** as
             
-                ```json
+                ```js
                 {
                     "email": "frenchdale@ontagene68.com" // email not in database
                 }
@@ -502,7 +502,7 @@ is already implemented, so these parts of the endpoints are not described here.
 
             *   Write the request data as **`raw`** **`json`** in the request **body** as
             
-                ```json
+                ```js
                 {
                     "email": "frenchdale@ontagene.com" // email is in database
                 }
