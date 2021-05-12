@@ -25,10 +25,12 @@ along with a rudimentary login authentication and session authorization system.
     `$ (sudo) docker pull mongo`
     
     For this project to work correctly, the mongodb docker container will
-    have to be named **mongodb** and listen at **localhost's port 27017**:
+    have to be named **mongodb** and listen to **localhost's port 27017**,
+    thus a mapping between the container's 27017 port (default for MongoDB)
+    to the port 27017 port on the localhost.
 
     * `name:` mongodb
-    * `port:` 27017
+    * `port:` `localhost:27017 <--> mongodb:27017`
 
     This can be set running the mongo docker image with the command:
 
@@ -47,7 +49,10 @@ along with a rudimentary login authentication and session authorization system.
             `$ (sudo) docker cp students.json mongodb:/students.json`
 
             * Import *students.json* into the **Students** collection in the **InfoSys** database using this command.
-            `$ (sudo) docker exec -it mongodb mongoimport --db=InfoSys --collection=Students --file=students.json`
+                ```bash
+                $ (sudo) docker exec -it mongodb \
+                  mongoimport --db=InfoSys --collection=Students --file=students.json
+                ```
 
             (*this command will create the InfoSys database and the Students collection if they aren't yet present.*)
 
@@ -161,7 +166,7 @@ The requirement for the project is the implementation of **9 *API Endpoints***
 for the Flask application within the `app.py` script.
 
 As already mentioned in the **Setup**, *the data fetching logic* is already implemented,
-so this parts of the endpoints are not described.
+so these parts of the endpoints are not described.
 
 #### The API Endpoints
 
@@ -190,33 +195,30 @@ so this parts of the endpoints are not described.
         
             this check is implemented with the following if statement:
 
-            ``` py
+            ```py
             if users.find( { 'username': data[ 'username' ] } ).count() != 0:
                 return Response(
-                    'A user with the given username already exists.',
-                    status = 400,
-                    mimetype = 'application/json'
-                )
+                        'A user with the given username already exists.',
+                        status = 400,
+                        mimetype = 'application/json' )
             ```
 
-        2.  Insert the new user to **Users**.
-            This is implemented using the following statement:
+        2.  Insert the new user to **Users**. This is implemented using the following statement:
 
             ```py
             users.insert_one( {
-                'username': data[ 'username' ],
-                'password': data[ 'password' ]
-            } )
+                        'username': data[ 'username' ],
+                        'password': data[ 'password' ]
+                    } )
             ```
 
         3.  Return with a success response with `status = 200`, which is implemented as:
 
             ```py
             return Response(
-                'The user ' + data[ 'username' ] + ' was added to the database.',
-                status = 200,
-                mimetype = 'application/json'
-            )
+                    'The user ' + data[ 'username' ] + ' was added to the database.',
+                    status = 200,
+                    mimetype = 'application/json' )
             ```
 
     * ##### Testing
@@ -265,7 +267,7 @@ so this parts of the endpoints are not described.
     Expects user to pass json data to the body of the request.
     An example for the expected format for the json is shown:
 
-    ```js
+    ```json
     {
         "username": "sherlock",
         "password": "sherl0cked"
@@ -279,22 +281,21 @@ so this parts of the endpoints are not described.
     * ##### Implementation
 
         1.  Check if username and password correspond to an existing user in **Users**
-            *   if there is no user with the provided username **and** password the
+            *   if there is no user with the provided username **and** password then
                 return with an error response with `status = 400`
         
             this check is implemented with the following if statement:
 
             ``` py
             if users.find( {
-                'username': data[ 'username' ],
-                'password': data[ 'password' ]
-            } ).count() == 0:
-                
+                        'username': data[ 'username' ],
+                        'password': data[ 'password' ]
+                    } ).count() == 0:
+
                 return Response(
-                    'Wrong username or password.',
-                    status = 400,
-                    mimetype = 'application/json'
-                )
+                        'Wrong username or password.',
+                        status = 400,
+                        mimetype = 'application/json' )
             ```
 
         2.  Creat a new user-session:
@@ -303,13 +304,15 @@ so this parts of the endpoints are not described.
             user_uuid = create_session( data[ 'username' ] )
             ```
 
-        3.  return with a success response containing the user-uuid
-            with `status = 200`:
+        3.  return with a success response containing the user-uuid with `status = 200`:
 
             ```py
             res = { 'uuid': user_uuid, 'username': data[ 'username' ] }
 
-            return Response( json.dumps( res ), status = 200, mimetype = 'application/json' )
+            return Response(
+                    json.dumps( res ),
+                    status = 200,
+                    mimetype = 'application/json' )
             ```
 
     * ##### Testing
@@ -388,17 +391,22 @@ so this parts of the endpoints are not described.
 
             try:
                 user_uuid = request.headers[ 'Authorization' ]
-            except Exception as e:
+            except Exception:
                 return Response(
-                    'Authorization Key Error', status = 500, mimetype = 'application/json' )
+                        'Authorization Key Error',
+                        status = 500,
+                        mimetype = 'application/json' )
             ```
 
             Validate authorization using `is_session_valid( user_uuid )`
             *   If the user is not authorized return with an error response `status = 401`
 
             ```py
-            if not is_session_valid( user_uuid ): 
-                return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+            if not is_session_valid( user_uuid ):
+                return Response(
+                        'Unauthorized.',
+                        status = 401,
+                        mimetype = 'application/json' )
             ```
 
         2.  Search for a student with the provided email
@@ -407,30 +415,29 @@ so this parts of the endpoints are not described.
 
             ```py
             found = students.find_one( { 'email': data[ 'email' ] } )
-        
+
             if not found:
                 return Response(
-                    'Student not found.', status = 400, mimetype = 'application/json')
+                        'Student not found.',
+                        status = 400,
+                        mimetype = 'application/json' )
             ```
 
         3.  construct student dictionary and return
             with a success response containing the student `status = 200`:
 
             ```py
-            student = {
-                'name': found[ 'name' ],
-                'email': found[ 'email' ],
-                'yearOfBirth': found[ 'yearOfBirth' ]
-            }
+            student = {}
 
-            if 'address' in found:
-                student[ 'address' ] = found[ 'address' ]
-
-            if 'courses' in found:
-                student[ 'courses' ] = found[ 'courses' ]
+            for key in found.keys():
+                if key == '_id':
+                    continue
+                student[ key ] = found[ key ]
 
             return Response(
-                json.dumps( student ), status = 200, mimetype = 'application/json' )
+                    json.dumps( student ),
+                    status = 200,
+                    mimetype = 'application/json' )
             ```
 
     * ##### Testing
@@ -523,73 +530,67 @@ so this parts of the endpoints are not described.
             *   if an exception occurs while retreiving authorization
                 return with an error response `status = 500`
 
-            ``` py
+            ``` py        
             user_uuid = None
 
             try:
                 user_uuid = request.headers[ 'Authorization' ]
-            except Exception as e:
+            except Exception:
                 return Response(
-                    'Authorization Key Error', status = 500, mimetype = 'application/json' )
+                        'Authorization Key Error',
+                        status = 500,
+                        mimetype = 'application/json' )
             ```
             
             Validate authorization using `is_session_valid( user_uuid )`
             *   If the user is not authorized return with an error response `status = 401`
 
             ```py
-            if not is_session_valid( user_uuid ): 
-                return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+            if not is_session_valid( user_uuid ):
+                return Response(
+                        'Unauthorized.',
+                        status = 401,
+                        mimetype = 'application/json' )
             ```
 
         2.  Get current year and search for 30 year-old students in the database:
+            *   If no 30 year-old students are found in the database return with an error response:
     
             ```py
             current_year = datetime.today().year
             
             search_results = students.find( { 'yearOfBirth': ( current_year - 30 ) } )
-            ```
 
+            if results.count() == 0:
+                return Response(
+                        'No students that are 30 years-old found.',
+                        status = 400,
+                        mimetype = 'application/json' )
+            ```
+        
         3.  Construct the students_thirties list:
 
             ```py
             students_thirties = []
 
-            for result in search_results:
+            for result in results:
+                student = {}
 
-                item = {
-                    'name': result[ 'name' ],
-                    'email': result[ 'email' ],
-                    'yearOfBirth': result[  'yearOfBirth' ]
-                }
+                for key in result.keys():
+                    if key == '_id':
+                        continue
+                    student[ key ] = result[ key ]
 
-                if 'address' in result:
-                    item[ 'address' ] = result[ 'address' ]
-
-                if 'courses' in result:
-                    item[ 'courses' ] = result[ 'courses' ]
-
-                students_thirties.append( item )
+                students_thirties.append( student )
             ```
 
-        4.  If no 30 year-old students are found in the database return with an error response:
-
-            ```py
-            if not students_thirties:
-                return Response(
-                    'No 30 year-old students found.',
-                    status = 400,
-                    mimetype = 'application/json'
-                )
-            ```
-
-        5.  Return with a success response containing the students_thirties list `status = 200`:
+        4.  Return with a success response containing the students_thirties list `status = 200`:
 
             ```py
             return Response(
-                json.dumps( students_thirties ),
-                status = 200,
-                mimetype = 'application/json'
-            )
+                    json.dumps( students_thirties ),
+                    status = 200,
+                    mimetype = 'application/json' )
             ```
 
     * ##### Testing
@@ -641,34 +642,45 @@ so this parts of the endpoints are not described.
             *   If an exception occurs while retreiving authorization
                 return with an error response `status = 500`:
 
-            ``` py
+            ``` py        
             user_uuid = None
 
             try:
                 user_uuid = request.headers[ 'Authorization' ]
-            except Exception as e:
+            except Exception:
                 return Response(
-                    'Authorization Key Error', status = 500, mimetype = 'application/json' )
+                        'Authorization Key Error',
+                        status = 500,
+                        mimetype = 'application/json' )
             ```
 
             Validate authorization using `is_session_valid( user_uuid )`.
-
             *   If the user is not authorized return with an error response `status = 401`:
 
             ```py
-            if not is_session_valid( user_uuid ): 
-                return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+            if not is_session_valid( user_uuid ):
+                return Response(
+                        'Unauthorized.',
+                        status = 401,
+                        mimetype = 'application/json' )
             ```
 
         2.  Get current year and
             search for students that are at least 30 years old in the database:
+            *   If no students over 30 are found in the database return with an error response:
 
             ```py
             current_year = datetime.today().year
             
-            search_results = students.find( {
+            results = students.find( {
                 'yearOfBirth': { '$lte': ( current_year - 30 ) }
             } )
+
+            if results.count() == 0:
+                return Response(
+                        "No students that are at least 30 years-old found.",
+                        status = 500,
+                        mimetype = "application/json" )
             ```
 
         3.  Construct the students_oldies list:
@@ -676,38 +688,24 @@ so this parts of the endpoints are not described.
             ```py
             students_oldies = []
 
-            for result in search_results:
+            for result in results:
+                student = {}
 
-                item = {
-                    'name': result[ 'name' ],
-                    'email': result[ 'email' ],
-                    'yearOfBirth': result[  'yearOfBirth' ]
-                }
+                for key in result.keys():
+                    if key == '_id':
+                        continue
+                    student[ key ] = result[ key ]
 
-                if 'address' in result:
-                    item[ 'address' ] = result[ 'address' ]
-
-                if 'courses' in result:
-                    item[ 'courses' ] = result[ 'courses' ]
-
-                students_oldies.append( item )
-            ```
-
-        4.  If no students over 30 are found in the database return with an error response:
-
-            ```py
-            if not students_oldies:
-                return Response(
-                    'No students that are at least 30 years old found.',
-                    status = 400,
-                    mimetype = 'application/json' )
+                students_oldies.append( student )
             ```
 
         5.  Return with a success response containing the students_oldies list `status = 200`:
 
             ```py
             return Response(
-                json.dumps( students_oldies ), status = 200, mimetype = 'application/json' )
+                    json.dumps( students_oldies ),
+                    status = 200,
+                    mimetype = 'application/json' )
             ```
 
     * ##### Testing
@@ -763,17 +761,22 @@ so this parts of the endpoints are not described.
 
             try:
                 user_uuid = request.headers[ 'Authorization' ]
-            except Exception as e:
+            except Exception:
                 return Response(
-                    'Authorization Key Error', status = 500, mimetype = 'application/json' )
+                        'Authorization Key Error',
+                        status = 500,
+                        mimetype = 'application/json' )
             ```
 
             Validate authorization using `is_session_valid( user_uuid )`.
             *   If the user is not authorized return with an error response `status = 401`:
 
             ```py
-            if not is_session_valid( user_uuid ): 
-                return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+            if not is_session_valid( user_uuid ):
+                return Response(
+                        'Unauthorized.',
+                        status = 401,
+                        mimetype = 'application/json' )
             ```        
 
          2. Search for the student with the provided email in the Students collection.
@@ -785,13 +788,17 @@ so this parts of the endpoints are not described.
 
             if not found:
                 return Response(
-                    'Student not found.', status = 400, mimetype = 'application/json' )
-            
+                        'Student not found.',
+                        status = 400,
+                        mimetype = 'application/json' )
+
             if 'address' not in found:
                 return Response(
-                    'The user with the email ' + data[ 'email' ] + ' has no address.',
-                    status = 400,
-                    mimetype = 'application/json' )
+                        'The student with the email '
+                                + data[ 'email' ]
+                                + ' has no address.',
+                        status = 400,
+                        mimetype = 'application/json' )
             ```
 
         3.  Construct the student dictionary.
@@ -801,10 +808,16 @@ so this parts of the endpoints are not described.
             street = found[ 'address' ][ 0 ][ 'street' ]
             postcode = found[ 'address' ][ 0 ][ 'postcode' ]
 
-            student = { 'name': found[ 'name' ], 'street': street, 'postcode': postcode }
+            student = {
+                'name': found[ 'name' ],
+                'street': street,
+                'postcode': postcode
+            }
 
             return Response(
-                json.dumps( student ), status = 200, mimetype = 'application/json' )
+                    json.dumps( student ),
+                    status = 200,
+                    mimetype = 'application/json' )
             ```
 
         * ##### Testing
@@ -918,14 +931,16 @@ so this parts of the endpoints are not described.
             *   If an exception occurs while retreiving authorization
                 return with an error response `status = 500`
 
-            ``` py
+            ``` py        
             user_uuid = None
 
             try:
                 user_uuid = request.headers[ 'Authorization' ]
-            except Exception as e:
+            except Exception:
                 return Response(
-                    'Authorization Key Error', status = 500, mimetype = 'application/json' )
+                        'Authorization Key Error',
+                        status = 500,
+                        mimetype = 'application/json' )
             ```
 
             Validate authorization using `is_session_valid( user_uuid )`.
@@ -933,23 +948,30 @@ so this parts of the endpoints are not described.
             *   If the user is not authorized return with an error response `status = 401`:
 
             ```py
-            if not is_session_valid( user_uuid ): 
-                return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+            if not is_session_valid( user_uuid ):
+                return Response(
+                        'Unauthorized.',
+                        status = 401,
+                        mimetype = 'application/json' )
             ```
 
         2.  Try to delete the student with the provided email from the Students collection.
             *   If the student with the given email wasn't deleted return with an error response.
 
             ```py
-            if not students.delete_one( { 'email': data['email'] } ).deleted_count:
+            if students.delete_one( { 'email': data['email'] } ).deleted_count == 0:
                 return Response(
-                    'Student not found.', status = 400, mimetype = 'application/json' )
+                        'Student not found.',
+                        status = 400,
+                        mimetype = 'application/json' )
             ```
         4.  Return with a success response.
 
             ```py
             return Response(
-                'Student deleted successfully.', status = 200, mimetype = 'application/json' )
+                    'Student deleted successfully.',
+                    status = 200,
+                    mimetype = 'application/json' )
             ```
 
     * ##### Testing
@@ -1056,9 +1078,11 @@ so this parts of the endpoints are not described.
 
             try:
                 user_uuid = request.headers[ 'Authorization' ]
-            except Exception as e:
+            except Exception:
                 return Response(
-                    'Authorization Key Error', status = 500, mimetype = 'application/json' )
+                        'Authorization Key Error',
+                        status = 500,
+                        mimetype = 'application/json' )
             ```
 
             Validate authorization using `is_session_valid( user_uuid )`.
@@ -1066,8 +1090,11 @@ so this parts of the endpoints are not described.
             *   If the user is not authorized return with an error response `status = 401`:
 
             ```py
-            if not is_session_valid( user_uuid ): 
-                return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+            if not is_session_valid( user_uuid ):
+                return Response(
+                        'Unauthorized.',
+                        status = 401,
+                        mimetype = 'application/json' )
             ```
 
         2.  Check if the courses provided in the data are in proper format:
@@ -1077,39 +1104,48 @@ so this parts of the endpoints are not described.
             ```py
             if not isinstance( data[ 'courses' ], list ):
                 return Response(
-                    'courses should be a list.', status = 500, mimetype = 'application/json' )
+                        'courses should be a list.',
+                        status = 500,
+                        mimetype = 'application/json' )
             ```
 
             *   If any item in the courses list is not a one-key dictionary with an integer value
                 then return with an error response:
 
-                ```py
-                for item in data[ 'courses' ]:
-                    if not isinstance( item, dict ) or len( item ) != 1
-                            or not isinstance( list( item.values() )[ 0 ], int ):
+            ```py
+            for item in data[ 'courses' ]:
+                if ( not isinstance( item, dict ) or
+                        len( item ) != 1 or
+                                not isinstance( list( item.values() )[ 0 ], int ) ):
 
-                        return Response(
-                            'courses should only contain one-key integer-value dictionaries.',
+                    return Response(
+                            'courses should only contain '
+                                    + 'one-key integer-value dictionaries.',
                             status = 500,
                             mimetype = 'application/json' )
-                ```
+            ```
 
         3.  Try to add the courses to the student.
             *   If no student matched the provided email return with an error response:
 
             ```py
-            if  students.update_one( { 'email': data[ 'email' ] },
+            if students.update_one(
+                    { 'email': data[ 'email' ] },
                     { '$set': { 'courses': data[ 'courses' ] } } ).matched_count == 0:
 
                 return Response(
-                    'Student not found.', status = 400, mimetype = 'application/json')
+                        'Student not found.',
+                        status = 400,
+                        mimetype = 'application/json' )
             ```
 
         4.  Return with a success response:
 
             ```py
             return Response(
-                'Student updated successfully.', status = 200, mimetype = 'application/json')
+                    'Student updated successfully.',
+                    status = 200,
+                    mimetype = 'application/json' )
             ```
 
     * ##### Testing
@@ -1262,17 +1298,22 @@ so this parts of the endpoints are not described.
 
             try:
                 user_uuid = request.headers[ 'Authorization' ]
-            except Exception as e:
+            except Exception:
                 return Response(
-                    'Authorization Key Error', status = 500, mimetype = 'application/json' )
+                        'Authorization Key Error',
+                        status = 500,
+                        mimetype = 'application/json' )
             ```
 
             Validate authorization using `is_session_valid( user_uuid )`.
             *   If the user is not authorized return with an error response `status = 401`:
 
             ```py
-            if not is_session_valid( user_uuid ): 
-                return Response( 'Unauthorized.', status = 401, mimetype = 'application/json' )
+            if not is_session_valid( user_uuid ):
+                return Response(
+                        'Unauthorized.',
+                        status = 401,
+                        mimetype = 'application/json' )
             ```
         
         2.  Search database for the student with the provided email.
@@ -1282,19 +1323,22 @@ so this parts of the endpoints are not described.
             found = students.find_one( { 'email': data[ 'email' ] } )
 
             if not found:
-
                 return Response(
-                    'Student not found.', status = 400, mimetype = 'application/json' )
+                        'Student not found.',
+                        status = 400,
+                        mimetype = 'application/json' )
             ```
         
             If the student found has no courses return with an error response:
 
             ```py
             if 'courses' not in found:
-
-            return Response(
-                'The student with the email ' + data[ 'email' ] + ' has no courses.',
-                status = 400, mimetype = 'application/json' )
+                return Response(
+                        'The student with the email '
+                                + data[ 'email' ]
+                                + ' has no courses.',
+                        status = 400,
+                        mimetype = 'application/json' )
             ```
         
         3.  Filter passed courses.
@@ -1303,14 +1347,17 @@ so this parts of the endpoints are not described.
             ```py
             passed_courses = []
 
-            for item in found[ 'courses' ]:
-                if 5 <= list( item.values() )[ 0 ]:
-                    passed_courses.append( item )
-            
+            for course in found[ 'courses' ]:
+                if 5 <= list( course.values() )[ 0 ]:
+                    passed_courses.append( course )
+
             if len( passed_courses ) == 0:
                 return Response(
-                    'The student with the email ' + data[ 'email' ] + ' has no passed courses.',
-                    status = 400, mimetype = 'application/json' )
+                        'The student with the email '
+                                + data[ 'email' ]
+                                + ' has no passed courses.',
+                        status = 400,
+                        mimetype = 'application/json' )
             ```
         
         4.  Construct output and return with a success respond
@@ -1318,8 +1365,11 @@ so this parts of the endpoints are not described.
 
             ```py
             student = { 'name': found[ 'name' ], 'passed courses': passed_courses }
+
             return Response(
-                json.dumps( student ), status = 200, mimetype = 'application/json' )
+                    json.dumps( student ),
+                    status = 200,
+                    mimetype = 'application/json' )
             ```
 
     * ##### Testing
